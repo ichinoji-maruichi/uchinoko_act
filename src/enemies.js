@@ -101,10 +101,15 @@ export function updateEnemies(){
       player.vy=STOMP_BOUNCE*(T.stompBounceScale||1);   // 大型敵ほど強く跳ね返す
       // 2段ジャンプ復活。ただし大型敵(stompRefund:false)は戻さない→無限バウンド不可
       if(STOMP_REVIVE_DOUBLEJUMP && T.stompRefund!==false) player.jumpsLeft=1;
-      e.hitFlash=6;
-      // 倒したら「ぐしゃっ」、HPが残る敵(brute/大型)は1ダメージで跳ねるだけ「ポン」
-      if(e.maxHp>1){ e.hp--; if(e.hp<=0){ killEnemy(e,'stomp'); } else { sfx.stomp(); } }
-      else { killEnemy(e,'stomp'); }
+      // 大型敵(stompImmune): 踏めるがダメージは入らない。跳ね返すだけ「ポン」→攻撃で倒す。
+      // ダメージが無いので点滅(hitFlash)もさせない。
+      if(T.stompImmune){ sfx.stomp(); }
+      else {
+        e.hitFlash=6;
+        // 倒したら「ぐしゃっ」、HPが残る敵(brute)は1ダメージで跳ねるだけ「ポン」
+        if(e.maxHp>1){ e.hp--; if(e.hp<=0){ killEnemy(e,'stomp'); } else { sfx.stomp(); } }
+        else { killEnemy(e,'stomp'); }
+      }
       continue;
     }
 
@@ -121,6 +126,7 @@ export function updateEnemies(){
       const overlapY = eBottom>pTop && eTop<pBottom;
       if(overlapX && overlapY){
         GAME.hp--; sfx.hurt();
+        player.jumpUpper=false;
         const kbDir = (player.x<e.x?-1:1);
         if(player.onGround){
           // 地上 → ダメージモーション(操作不能・無敵)

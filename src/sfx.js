@@ -43,6 +43,12 @@ export const sfx = {
   // ジャンプ / 2段ジャンプ
   jump(){  if(isMuted())return; tone(320,640,0.12,'square',0.4); },
   jump2(){ if(isMuted())return; tone(440,900,0.12,'square',0.4); },
+  // ジャンプアッパー(斬撃「シュッ!」主体。ジャンプ的な上昇トーンは入れず攻撃感で差別化)
+  jumpUpper(){ if(isMuted())return;
+    noise(0.09,0.34,0,2400);              // 鋭いシュッ(高域ノイズ)
+    noise(0.15,0.18,0.03,1600);           // 振り抜きの余韻(やや低域)
+    tone(3600,1200,0.15,'triangle',0.20);  // 斬撃の芯(高→低で振り抜き。下降なのでジャンプに聞こえない)
+  },
   // 攻撃の空振り（風切り音）。空振りでも鳴る。弱/強、さらにフィニッシュ(strong)で音色を変える。
   swing(heavy=false, strong=false){ if(isMuted())return;
     if(strong){ // 強3撃目(フィニッシュ): 重く低い大振り
