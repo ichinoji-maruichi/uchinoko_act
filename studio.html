@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スプライトスタジオ</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="app">
+  <h1>スプライトスタジオ</h1>
+  <p class="sub">キャラのイラストから14ポーズのスプライト表を用意して、動きを確認・書き出し。ブラウザ内で完結。
+    <a href="index.html">▶ ゲームで遊ぶ</a></p>
+
+  <!-- STEP 0: モード選択 -->
+  <div class="group bevel-out" id="modeGroup">
+    <div class="legend"><span class="step">0</span>はじめに</div>
+    <div class="modecards">
+      <button class="modecard" id="modeGen">
+        <div class="mc-title">キャラを生成する</div>
+        <div class="mc-sub">キャラのイラスト1枚から、AIチャットにプロンプトを渡してスプライト表を作ります（無料でOK）</div>
+      </button>
+      <button class="modecard" id="modeExisting">
+        <div class="mc-title">既存データを使う</div>
+        <div class="mc-sub">緑背景の5×3スプライト表を持っている場合／お試し用マネキンで遊ぶ</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP G: スプライト表を作る（外部チャットで無料生成） -->
+  <div class="group bevel-out" id="charGroup" style="display:none">
+    <div class="legend"><span class="step">G</span>キャラのスプライト表を作る</div>
+    <div class="hint" style="margin-top:0">
+      「プロンプトをコピー」と、キャラに合うテンプレートを保存して、画像生成できるチャット（Gemini / ChatGPT など）を開き、
+      <b>プロンプトを貼り付け → 自分のキャラ絵とテンプレート画像の2枚を添付 → 送信</b>。
+      できたスプライト表を、下の STEP1 に読み込んでください。
+    </div>
+    <div style="margin-top:8px">
+      <button id="copyPromptBtn" class="primary">プロンプトをコピー</button>
+      <button id="dlTemplateA">テンプレA（通常版）</button>
+      <button id="dlTemplateB">テンプレB（拡張版）</button>
+    </div>
+    <div class="hint" style="margin-top:6px">
+      <b>テンプレA（通常版）</b>：ふつうのキャラはこちら。<br>
+      <b>テンプレB（拡張版）</b>：長い髪・マフラー・尻尾などの揺れ物や装飾が多いキャラ向け（コマ内の余白が広め）。
+    </div>
+    <div id="webStatus" class="hint" style="margin-top:8px"></div>
+  </div>
+
+  <!-- STEP 1: 読み込み -->
+  <div class="group bevel-out" id="loadGroup" style="display:none">
+    <div class="legend"><span class="step">1</span>スプライト表を読み込む</div>
+    <div id="drop" class="drop bevel-in">
+      画像をここにドラッグ、または<b>クリックして選択</b><br>
+      <small>5列×3行・緑背景 (推奨 0,255,34)。1コマに1体。空きコマ可。</small>
+    </div>
+    <input type="file" id="file" accept="image/*">
+    <div style="margin-top:8px"><button id="useDefault">お試しマネキンを使う</button></div>
+  </div>
+
+  <!-- STEP 2: 抜き調整 -->
+  <div class="group bevel-out" id="tuneGroup" style="display:none">
+    <div class="legend"><span class="step">2</span>抜き具合を調整</div>
+    <div class="row">
+      <div class="col">
+        <div class="hint" style="margin:0 0 8px">
+          背景キー色: <span id="keySwatch" style="display:inline-block;width:12px;height:12px;vertical-align:-2px;border:1px solid #888"></span>
+          <span id="keyVal">自動</span>（四隅から自動取得）
+        </div>
+        <label class="ctl">抜きの強さ
+          <input type="range" id="tol" min="20" max="200" value="120"><span class="val" id="tolV">120</span>
+        </label>
+        <label class="ctl">最小サイズ
+          <input type="range" id="minsz" min="50" max="800" value="200"><span class="val" id="minszV">200</span>
+        </label>
+        <label class="ctl">縁マージン
+          <input type="range" id="inset" min="0" max="12" value="3"><span class="val" id="insetV">3</span>
+        </label>
+        <div class="hint">
+          <b>抜きの強さ</b>：下げると背景を多く残し、上げるとキャラの縁まで削ります。
+          縁に色がにじむ時は下げ、背景が残る時は上げる。<br>
+          <b>最小サイズ</b>未満の塊はゴミとして無視。<br>
+          <b>縁マージン</b>：セル境界の線が残る時に上げます。
+        </div>
+      </div>
+      <div class="col">
+        <div class="bevel-in" style="padding:6px;background:#2b2f3a">
+          <canvas id="srcPrev" style="width:100%;display:block"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: 抽出結果 -->
+  <div class="group bevel-out" id="poseGroup" style="display:none">
+    <div class="legend"><span class="step">3</span>抽出結果（14ポーズ）</div>
+    <div id="grid"></div>
+    <div class="hint" style="margin-top:10px">
+      各コマ左上=ポーズ名、右下=アンカー種別（<span class="pill">足元</span>接地基準 /
+      <span class="pill">重心</span>ジャンプ用）。取りこぼしがあれば STEP2 を調整。
+    </div>
+  </div>
+
+  <!-- STEP 4: 動作プレビュー -->
+  <div class="group bevel-out" id="animGroup" style="display:none">
+    <div class="legend"><span class="step">4</span>動作プレビュー</div>
+    <div class="stagewrap">
+      <div class="bevel-in" style="padding:0">
+        <canvas id="stage" width="320" height="320"></canvas>
+      </div>
+      <div>
+        <div class="clips" id="clips"></div>
+        <label class="ctl" style="margin-top:12px">速度
+          <input type="range" id="fps" min="2" max="18" value="8"><span class="val" id="fpsV">8</span> fps
+        </label>
+        <label class="ctl">拡大
+          <input type="range" id="zoom" min="1" max="4" value="2" step="1"><span class="val" id="zoomV">2×</span>
+        </label>
+        <label class="ctl">向き
+          <select id="dir">
+            <option value="1">右向き（元絵）</option>
+            <option value="-1">左向き（反転）</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button id="dlZip" class="primary">14ポーズをPNGで書き出し</button>
+      <button id="dlJson">アニメ定義(JSON)を書き出し</button>
+    </div>
+  </div>
+
+  <div class="foot">処理はすべてこのページ内（JavaScript / Canvas）で完結します。画像は外部に送信されません（ルートAの生成リクエストを除く）。</div>
+</div>
+
+<script type="module" src="src/studio/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+/* スプライトスタジオ固有スタイル（styles.css の後に読み込む） */
+:root{ --stage:#2b2f3a; }
+.app{ max-width:1080px; }
+
+.group>.legend{font-weight:bold;margin:-2px 0 10px;font-size:12px;display:flex;align-items:center;gap:8px}
+.step{width:20px;height:20px;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:12px;border-radius:2px}
+button.primary{font-weight:bold}
+
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.col{flex:1;min-width:280px}
+label.ctl{display:flex;align-items:center;gap:8px;margin:6px 0}
+label.ctl input[type=range]{flex:1}
+.val{font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+select{font:inherit;padding:3px;border:2px solid;border-color:var(--lo) var(--hi) var(--hi) var(--lo);background:var(--field)}
+.pill{display:inline-block;background:#e8e8e0;border:1px solid var(--line);padding:1px 6px;font-size:11px;margin:0 2px;border-radius:2px}
+
+/* 抽出グリッド */
+#grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cell{position:relative;aspect-ratio:1;display:grid;place-items:center;background:#3a3f4b;overflow:hidden;padding:4px}
+.cell.empty{opacity:.35}
+.cell canvas{max-width:100%;max-height:100%}
+.cell .tag{position:absolute;top:2px;left:3px;font-size:10px;color:#ffd166;text-shadow:0 1px 0 #000;pointer-events:none}
+.cell .anchor{position:absolute;bottom:2px;right:3px;font-size:9px;color:#8fd;pointer-events:none}
+
+/* プレビューステージ(市松) */
+.stagewrap{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+#stage{width:auto;border:0;
+  background:
+    linear-gradient(45deg,#333 25%,transparent 25%,transparent 75%,#333 75%) 0 0/16px 16px,
+    linear-gradient(45deg,#333 25%,#2b2f3a 25%,#2b2f3a 75%,#333 75%) 8px 8px/16px 16px;
+  background-color:var(--stage)}
+.clips{display:flex;flex-wrap:wrap;gap:5px;max-width:360px}
+.clips button{padding:4px 9px;font-size:12px}
+.clips button.on{border-color:var(--lo) var(--hi) var(--hi) var(--lo);background:#b0b0c8;font-weight:bold}
+
+/* モードカード */
+.modecards{display:flex;gap:14px;flex-wrap:wrap}
+.modecard{flex:1;min-width:240px;text-align:left;padding:16px;
+  border:2px solid;border-color:var(--hi) var(--lo) var(--lo) var(--hi);background:var(--panel);cursor:pointer}
+.modecard:hover{background:#e4e0d8}
+.modecard.on{border-color:var(--lo) var(--hi) var(--hi) var(--lo);background:#c8c8dc}
+.mc-title{font-weight:bold;font-size:14px;margin-bottom:6px;color:var(--accent)}
+.mc-sub{font-size:12px;color:#333;line-height:1.5}
+
+/* details(ルートA) */
+details.routeA{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+details.routeA summary{cursor:pointer;font-weight:bold;color:#555}
+details.routeA[open] summary{color:var(--accent)}
+
+/* スピナー */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #888;border-top-color:var(--accent);
+  border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}

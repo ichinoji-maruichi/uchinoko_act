@@ -1,0 +1,13 @@
+# ローカル/個人設定
+.claude/settings.local.json
+
+# 未使用の残骸
+assets/old_player_default.png
+
+# 開発用アーカイブ（履歴を残したいなら消す）
+reference/
+
+# OS・エディタのごみ
+.DS_Store
+Thumbs.db
+*.log

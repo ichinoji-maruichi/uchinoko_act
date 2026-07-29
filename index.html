@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>うちの子ゲームになっちゃいました</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<!-- ===== ヘッダ ===== -->
+<header class="topbar" id="siteHeader">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>うちの子ゲームになっちゃいました</div>
+    <nav class="nav">
+      <a href="#prepare">①キャラを用意</a>
+      <a href="#play">②あそぶ</a>
+      <a href="#help">作成のコツ</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== ランディング（読み込み前） ===== -->
+<main id="landing">
+  <!-- ヒーロー -->
+  <section class="hero"><div class="wrap">
+    <div class="hero-top">
+      <div id="heroLogo">
+        <div class="hero-logo-fallback"><span class="a">うちの子</span><span class="b">ゲームになっちゃいました</span></div>
+      </div>
+      <div class="hero-copy">
+        <div class="tag">あなたのイラストのキャラが、そのままゲームキャラに。</div>
+        <p class="muted">
+          キャラのイラストを1枚用意して、ドット絵のゲーム素材にして読み込むだけ。<br>
+          自分のキャラでゲームが遊べる、ブラウザ完結のアクションゲームです。
+        </p>
+        <div class="hero-cta">
+          <a href="#play" class="btn blue lg">▶ さっそくあそぶ</a>
+          <a href="#prepare" class="btn ghost lg">キャラの作り方</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="ba">
+      <div class="ba-card"><span class="label">あなたのイラスト</span>
+        <div id="heroIllust" class="ba-illust">（見本イラスト）</div>
+      </div>
+      <div class="ba-arrow">→</div>
+      <div class="ba-card after"><span class="label">ゲームキャラに！</span>
+        <div class="ba-stage"><canvas id="heroSprite" width="240" height="220"></canvas></div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- ① キャラ画像を用意しよう -->
+  <section id="prepare"><div class="wrap">
+    <div class="card">
+      <div class="sec-head"><span class="badge">①</span><h2>ゲームキャラ画像を用意しよう</h2></div>
+      <p class="muted" style="margin-top:4px">
+        画像生成AI（Gemini / ChatGPT など）に、下のプロンプトとテンプレートを渡して、
+        あなたのキャラのスプライト表（ゲーム素材）を作ってもらいましょう！
+      </p>
+      <div class="btnrow">
+        <button id="copyPromptLand" class="btn">📋 プロンプトをコピー</button>
+        <button id="dlTplA" class="btn ghost">⬇ テンプレA（通常版）</button>
+        <button id="dlTplB" class="btn ghost">⬇ テンプレB（拡張版）</button>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:8px">
+        <b>通常版</b>＝ふつうのキャラ／<b>拡張版</b>＝長い髪・マフラー・尻尾など揺れ物や装飾が多いキャラ向け。</p>
+      <div id="landStatus" class="status"></div>
+      <div class="steps">
+        <div class="step"><div class="n">STEP 1</div>「プロンプトをコピー」＋キャラに合うテンプレを保存</div>
+        <div class="step"><div class="n">STEP 2</div>生成AIチャットに<b>プロンプトを貼り付け</b>、<b>キャラ絵とテンプレの2枚</b>を添付して送信</div>
+        <div class="step"><div class="n">STEP 3</div>できたスプライト表を保存 → 下の②で読み込む</div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- ② 読み込んでゲーム開始 -->
+  <section id="play"><div class="wrap">
+    <div class="card">
+      <div class="sec-head"><span class="badge" style="background:var(--mint);color:var(--ink)">②</span><h2>読み込んでゲーム開始！</h2></div>
+      <p class="muted" style="margin-top:4px">緑背景の5×3スプライト表を読み込むと、そのままゲームが始まります。　※読み込んだ画像は送信されたり保存されることはありません。</p>
+      <div id="drop" class="drop" style="margin-top:12px">
+        スプライト表をここにドラッグ、または<b>クリックして選択</b><br>
+        <small>5列×3行・緑背景 (推奨 0,255,34)。①で作ったものを入れてください。</small>
+      </div>
+      <input type="file" id="file" accept="image/*">
+      <div style="margin-top:12px"><button id="useDefault" class="btn pink">サンプルキャラで試す</button></div>
+    </div>
+  </div></section>
+
+  <!-- スプライト作成のヒント -->
+  <section id="help"><div class="wrap">
+    <div class="card">
+      <div class="sec-head"><span class="badge" style="background:var(--coral)">!</span><h2>スプライト作成のヒント・注意点</h2></div>
+      <p class="muted" style="margin-top:2px">きれいに動かすための、キャラ画像を作るときのコツです。</p>
+      <ul class="tips">
+        <li><b>背景は純緑でベタ塗り</b> — RGB(0,255,34)。影・グラデ・中間色は入れず、輪郭はハードエッジ（アンチエイリアスなし）に。</li>
+        <li><b>コマの枠線に重ねない</b> — キャラ（体・髪・マフラーなどの揺れ物・装飾）が枠線に触れないよう、上下左右に少し余白を。特に<b>ジャンプ・吹っ飛び・やられ</b>は頭や手足がはみ出しやすいので注意。</li>
+        <li><b>全コマで同じキャラ</b> — 髪・服・色を元イラストに忠実に。メガネ・帽子・ヒゲなど頭の小物はダメージ等でも外さない。</li>
+        <li><b>1コマに1体</b> — 各コマにキャラは1体だけ。2段目の右端コマは空（緑のまま）。</li>
+        <li><b>うまく抜けない時</b> — <a href="studio.html">スプライトスタジオ</a>の「抜き具合を調整」で微調整。それでもダメなら生成し直し。</li>
+      </ul>
+    </div>
+  </div></section>
+</main>
+
+<!-- ===== ゲーム画面（読み込み後に表示） ===== -->
+<div id="stageWrap"><div class="wrap">
+  <canvas id="stage" width="800" height="450"></canvas>
+  <div class="game-hint">
+    <span class="key">←</span><span class="key">→</span> 移動
+    <span class="key">↑</span> ジャンプ
+    <span class="key">↓</span> しゃがみ
+    <span class="key">Z</span> 弱
+    <span class="key">X</span> 強
+    <span class="key">P</span> 練習
+    <span class="key">M</span> ミュート
+    <span class="key">Esc</span> メニュー
+  </div>
+</div></div>
+
+<footer class="foot" id="siteFooter"><div class="wrap">
+  <span>処理はすべてこのページ内で完結します。</span>
+  © 2026 <a href="https://ichinoji-maruichi.github.io/">マルイチソフト</a>うんぽこ All Rights Reserved.
+</div></footer>
+
+<script type="module" src="src/main.js"></script>
+<script type="module" src="src/landing.js"></script>
+</body>
+</html>
