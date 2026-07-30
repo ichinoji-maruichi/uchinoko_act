@@ -174,10 +174,10 @@ body.has-touch.game-active #touchpad{
   border:3px solid var(--ink);border-radius:50%;
   background:rgba(255,255,255,.9);box-shadow:2px 2px 0 var(--ink);
 }
-/* 右クラスタ: 上段=ジャンプ(横2マスぶん中央)、下段=弱/強。省スペースな三角配置。 */
+/* 右クラスタ: 下段=弱/強、ジャンプは弱の少し左上(親指で届きやすい位置)。 */
 #touchpad .tp-actions{
-  display:grid;grid-template-columns:repeat(2,72px);grid-auto-rows:72px;
-  gap:12px;justify-items:center;align-items:center;
+  display:grid;grid-template-columns:repeat(2,84px);grid-auto-rows:84px;
+  gap:14px;justify-items:center;align-items:center;
 }
 .tp-btn{
   touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
@@ -186,9 +186,11 @@ body.has-touch.game-active #touchpad{
   background:rgba(255,255,255,.78);border:3px solid var(--ink);border-radius:14px;
   box-shadow:2px 2px 0 var(--ink);opacity:.9;
 }
-.tp-btn.tp-jump,.tp-btn.tp-light,.tp-btn.tp-heavy{width:72px;height:72px;border-radius:50%}
-.tp-btn.tp-jump{grid-column:1 / -1;background:var(--accent);color:#fff;font-size:15px}  /* ジャンプ(上段・中央) */
-.tp-btn.tp-light,.tp-btn.tp-heavy{font-size:24px}
+.tp-btn.tp-jump,.tp-btn.tp-light,.tp-btn.tp-heavy{width:84px;height:84px;border-radius:50%}
+.tp-btn.tp-jump{grid-column:1;grid-row:1;margin:10px 0 0 -44px;background:var(--accent);color:#fff;font-size:16px}  /* 弱の少し左上(対角) */
+.tp-btn.tp-light{grid-column:1;grid-row:2}
+.tp-btn.tp-heavy{grid-column:2;grid-row:2}
+.tp-btn.tp-light,.tp-btn.tp-heavy{font-size:26px}
 .tp-btn.tp-light{background:var(--mint)}
 .tp-btn.tp-heavy{background:var(--coral)}
 .tp-btn.is-on{transform:translate(2px,2px);box-shadow:none;opacity:1;filter:brightness(1.08)}
