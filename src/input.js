@@ -49,6 +49,7 @@ export function setupInput(){
     // プレイ中に Esc で一時停止メニューを開く
     if(e.code==='Escape'){ runtime.paused=true; e.preventDefault(); return; }
     const k=KEYMAP[e.code]; if(k){keys[k]=true; e.preventDefault();}
+    if(e.code==='KeyD'){ runtime.DEBUG=!runtime.DEBUG; e.preventDefault(); }  // 当たり判定の可視化ON/OFF
     if(e.code==='KeyP'){ runtime.PRACTICE=!runtime.PRACTICE; if(runtime.PRACTICE){ world.enemies=[]; runtime.giantsPending=0; } e.preventDefault(); }
     // 練習モード中: 数字キーで指定した敵を出現(敵確認用)
     if(runtime.PRACTICE && PRACTICE_SPAWN[e.code]){ spawnEnemy(PRACTICE_SPAWN[e.code]); e.preventDefault(); }

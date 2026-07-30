@@ -1,5 +1,5 @@
 // ===================== プレイヤー状態機械 =====================
-import { GRAV, JUMP_V, MOVE_SPD, CLAMP_MARGIN, LIGHT_COMBO, HEAVY_COMBO, DOWN_INVULN } from './config.js';
+import { GRAV, JUMP_V, JUMP_UPPER_V, MOVE_SPD, CLAMP_MARGIN, LIGHT_COMBO, HEAVY_COMBO, DOWN_INVULN } from './config.js';
 import { stage, GROUND_Y, GAME, player, keys, runtime } from './state.js';
 import { sfx } from './sfx.js';
 import { bgm } from './bgm.js';
@@ -9,6 +9,25 @@ export function startAttack(combo){
   player.comboTimer=combo[0].wait;
   player.state='attack';
   // 風切り音は各斬りフレーム(atk1/2/3)で鳴らす → updatePlayer 側を参照
+}
+
+// ジャンプアッパー発動。通常より速く上昇し、上昇中は広い攻撃判定を出す(getAttackBox参照)。
+// 頂点(vy>=0)で jumpUpper を解除し通常のジャンプ下りへ移行する。
+export function startJumpUpper(){
+  const p=player;
+  p.vy=JUMP_UPPER_V;      // 通常ジャンプより速い上昇
+  p.onGround=false;
+  p.jumpsLeft=0;          // ジャンプアッパー後は2段ジャンプ不可
+  p.jumpUpper=true;
+  p.state='jump';
+  p.airAttack=0;
+  p.combo=null; p.comboIdx=0;
+  // 横方向の入力があれば反映(斜め上への遊撃)
+  if(keys.left&&!keys.right) p.vx=-MOVE_SPD;
+  else if(keys.right&&!keys.left) p.vx=MOVE_SPD;
+  else p.vx=0;
+  runtime.swingId++;      // 1回のアッパー=1スイング(各敵に1ヒット)
+  sfx.jumpUpper();
 }
 
 export function updatePlayer(){
@@ -51,6 +70,18 @@ export function updatePlayer(){
     p.vx=0; p.hurtTimer--;
     if(p.hurtTimer<=0 && !GAME.over){ p.state='idle'; p.onGround=true; }
     return;
+  }
+
+  // ===== ジャンプアッパー(ジャンプ+弱の同時押し) =====
+  // ジャンプ入力の瞬間に弱攻撃を押していれば発動。通常より速く上昇し広い判定を出す。
+  // ・地上から発動 → 2段ジャンプ不可(jumpsLeft=0)
+  // ・1段目ジャンプ中に発動 → それが2段目扱い(以降ジャンプ不可)
+  // ・弱攻撃の出始め(atk_start)なら中断してアッパーへ差し替え(同時押しの取りこぼし対策)
+  if(edgeUp && keys.light){
+    const groundOK = p.onGround &&
+      (p.state!=='attack' || (p.combo===LIGHT_COMBO && p.comboIdx===0));
+    const doubleOK = !p.onGround && p.jumpsLeft>0 && !p.jumpUpper;
+    if(groundOK || doubleOK){ startJumpUpper(); return; }
   }
 
   // 攻撃中は攻撃処理を優先（地上のみ）
@@ -119,17 +150,19 @@ export function updatePlayer(){
     // 空中: 横移動の慣性を軽く操作可能に
     if(pressLeft&&!pressRight) p.vx=Math.max(p.vx-0.4,-MOVE_SPD);
     else if(pressRight&&!pressLeft) p.vx=Math.min(p.vx+0.4,MOVE_SPD);
-    // 空中攻撃: 弱/強どちらでも1発。既に出てなければ発動
-    if((edgeLight||edgeHeavy) && p.airAttack<=0){ p.airAttack=16; runtime.swingId++; sfx.swing(edgeHeavy); }
+    // 空中攻撃: 弱/強どちらでも1発。既に出てなければ発動(アッパー中は専用判定なので出さない)
+    if((edgeLight||edgeHeavy) && p.airAttack<=0 && !p.jumpUpper){ p.airAttack=16; runtime.swingId++; sfx.swing(edgeHeavy); }
   }
   if(p.airAttack>0) p.airAttack--;
 
   // 物理
   p.vy+=GRAV;
+  // ジャンプアッパーは頂点(下降開始)で解除 → 通常のジャンプ下りへ
+  if(p.jumpUpper && p.vy>=0) p.jumpUpper=false;
   p.x+=p.vx; p.y+=p.vy;
   if(p.y>=GROUND_Y){
     p.y=GROUND_Y; p.vy=0;
-    if(!p.onGround){ p.onGround=true; p.state='idle'; p.airAttack=0; p.jumpsLeft=1; }
+    if(!p.onGround){ p.onGround=true; p.state='idle'; p.airAttack=0; p.jumpsLeft=1; p.jumpUpper=false; }
   }
   clampX();
 
@@ -169,13 +202,18 @@ export function getAttackBox(){
       reach=78;         // 弱・強1・強2は前方向へ広げる(見た目に合わせて拡張)
     }
     if(pose==='atk3'){
-      // フィニッシュ:前にも上にも大きく。タイミングが合えば飛敵(flyer)も倒せる。
-      reach=92;         // 前方向にさらに広く
-      hh=120;           // 縦に大きく(上方向に伸ばす)
-      cyOff=95;         // 判定中心を上へ持ち上げて高所の飛敵に届かせる
-      reachOff=0.55;    // 前寄せは控えめにして足元も巻き込む
+      // フィニッシュ:左ハイキック。脚を前方やや上へ伸ばすので前寄り＆頭上まで。
+      // タイミングが合えば飛敵(flyer)も倒せる。
+      reach=69;         // 前方向のリーチ(脚)。広すぎたので約7割に抑えた
+      hh=112;           // 縦に大きく(蹴り上げで頭上まで)
+      cyOff=82;         // 判定中心は頭〜蹴り足の高さ
+      reachOff=0.62;    // キックらしく前方に寄せる(足元は接触判定側でカバー)
     }
     dmg=step.dmg||1;
+  } else if(p.state==='jump' && p.jumpUpper && p.vy<0){
+    // ジャンプアッパー(上昇中): 前も上も広い判定。飛行敵/回復アイテムを遊撃しやすく。
+    active=true;
+    reach=84; hh=120; cyOff=80; reachOff=0.4;
   } else if(p.state==='jump' && p.airAttack>0){
     active=true;
     cyOff=55; hh=95;   // 空中攻撃は縦に広く。高い飛敵にもジャンプ頂点で届く
@@ -191,6 +229,7 @@ export function hurtPlayer(srcX){
   if(player.invuln>0)return;
   if(player.state==='hurt'||player.state==='knockback'||player.state==='down')return;
   GAME.hp--; sfx.hurt();
+  player.jumpUpper=false;
   const kbDir=(player.x<srcX?-1:1);
   if(player.onGround){
     player.state='hurt'; player.hurtTimer=28; player.invuln=60; player.vx=kbDir*3;

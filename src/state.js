@@ -30,6 +30,7 @@ export const player = {
   airAttack:0,         // >0 の間、空中攻撃ポーズを表示(フレーム残数)
   invuln:0,            // 被弾後の無敵フレーム
   jumpsLeft:1,         // 空中で使える追加ジャンプ回数
+  jumpUpper:false,     // ジャンプアッパー中(上昇中のみ true)。2段ジャンプ不可・広い判定
   // アニメ一般
   animT:0,
 };
@@ -93,4 +94,5 @@ export function resetGame(){
   player.x=stage.width/2; player.y=GROUND_Y; player.vx=0; player.vy=0;
   player.state='idle'; player.onGround=true; player.combo=null; player.airAttack=0;
   player.invuln=0; player.dying=false; player.hurtTimer=0; player.jumpsLeft=1;
+  player.jumpUpper=false;
 }

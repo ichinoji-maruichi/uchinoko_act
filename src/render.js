@@ -38,6 +38,7 @@ function currentPose(){
     case 'knockback': return 'knockback';
     case 'down': return 'down';
     case 'jump':
+      if(p.jumpUpper && p.vy<0) return 'jump_upper';   // ジャンプアッパー上昇中
       if(p.airAttack>0) return 'atk1';   // 空中攻撃
       return p.vy<0 ? 'jump_up' : 'jump_down';
     case 'walk':
@@ -102,12 +103,15 @@ export function render(){
   drawHUD();
   // 当たり判定の可視化
   if(runtime.DEBUG) drawDebug();
+  // タッチ端末では一時停止/ゲームオーバーのメニューをDOM(touch.js)で出すので、
+  // キー操作前提のcanvasメニューは描かない(READY画面は共通で描く)。
+  const touchUI = document.body.classList.contains('has-touch');
   // START待ち
   if(runtime.PHASE==='ready' && !GAME.over) drawReady();
   // 一時停止メニュー
-  if(runtime.paused && !GAME.over) drawPauseMenu();
+  if(runtime.paused && !GAME.over && !touchUI) drawPauseMenu();
   // ゲームオーバー
-  if(GAME.over) drawGameOver();
+  if(GAME.over && !touchUI) drawGameOver();
 }
 
 function drawReady(){

@@ -152,26 +152,127 @@ body.has-touch.game-active #touchpad{
   padding:14px 18px calc(14px + env(safe-area-inset-bottom));
   pointer-events:none;               /* 隙間はタップを canvas(=開始)に通す */
 }
-#touchpad .tp-dpad,#touchpad .tp-actions{pointer-events:auto}
-#touchpad .tp-dpad{
-  display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:6px;
+#touchpad .tp-stick,#touchpad .tp-actions{pointer-events:auto}
+/* 仮想スティック: 左側の広い領域。触れた点に base が出て knob が指を追う。 */
+#touchpad .tp-stick{
+  position:relative;flex:1 1 auto;align-self:stretch;
+  min-height:170px;margin-right:12px;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
 }
-.tp-up{grid-column:2;grid-row:1}
-.tp-left{grid-column:1;grid-row:2}
-.tp-right{grid-column:3;grid-row:2}
-.tp-down{grid-column:2;grid-row:3}
-#touchpad .tp-actions{display:flex;align-items:center;gap:16px}
+/* 触れていない間の定位置(home)。触れると JS が left/top を上書きして指の位置へ移動。 */
+#touchpad .tp-stick-base{
+  display:block;position:absolute;left:74px;top:50%;width:104px;height:104px;
+  transform:translate(-50%,-50%);
+  border:3px solid var(--ink);border-radius:50%;
+  background:rgba(255,255,255,.28);box-shadow:2px 2px 0 var(--ink);
+  opacity:.55;                       /* 待機中は控えめに */
+}
+#touchpad .tp-stick.is-dragging .tp-stick-base{ opacity:.95; }  /* 操作中ははっきり */
+#touchpad .tp-stick-knob{
+  position:absolute;left:50%;top:50%;width:54px;height:54px;
+  transform:translate(-50%,-50%);
+  border:3px solid var(--ink);border-radius:50%;
+  background:rgba(255,255,255,.9);box-shadow:2px 2px 0 var(--ink);
+}
+/* 右クラスタ: 上段=ジャンプ(横2マスぶん中央)、下段=弱/強。省スペースな三角配置。 */
+#touchpad .tp-actions{
+  display:grid;grid-template-columns:repeat(2,72px);grid-auto-rows:72px;
+  gap:12px;justify-items:center;align-items:center;
+}
 .tp-btn{
   touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
   display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:22px;color:var(--ink);cursor:pointer;
+  font-weight:900;color:var(--ink);cursor:pointer;
   background:rgba(255,255,255,.78);border:3px solid var(--ink);border-radius:14px;
   box-shadow:2px 2px 0 var(--ink);opacity:.9;
 }
-.tp-btn.tp-light,.tp-btn.tp-heavy{width:74px;height:74px;border-radius:50%;font-size:24px}
+.tp-btn.tp-jump,.tp-btn.tp-light,.tp-btn.tp-heavy{width:72px;height:72px;border-radius:50%}
+.tp-btn.tp-jump{grid-column:1 / -1;background:var(--accent);color:#fff;font-size:15px}  /* ジャンプ(上段・中央) */
+.tp-btn.tp-light,.tp-btn.tp-heavy{font-size:24px}
 .tp-btn.tp-light{background:var(--mint)}
 .tp-btn.tp-heavy{background:var(--coral)}
 .tp-btn.is-on{transform:translate(2px,2px);box-shadow:none;opacity:1;filter:brightness(1.08)}
+
+/* スマホのゲーム中はサイトのヘッダ/フッタを確実に隠す(no-scroll・没入) */
+body.has-touch.game-active #siteHeader,
+body.has-touch.game-active #siteFooter{ display:none !important; }
+
+/* システムボタン(右上): あそび方 / 練習 / メニュー */
+#tp-sys{ display:none; }
+body.has-touch.game-active #tp-sys{
+  display:flex;gap:8px;z-index:55;
+  position:fixed;right:12px;top:calc(10px + env(safe-area-inset-top));
+}
+/* システムボタンの分だけゲーム表示(canvas)を下げ、canvas内のSCORE等と重ならないように */
+body.has-touch.game-active #stageWrap{ padding-top:calc(64px + env(safe-area-inset-top)); }
+.tp-sysbtn{
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  font:inherit;font-weight:900;font-size:13px;color:var(--ink);cursor:pointer;
+  padding:7px 11px;background:rgba(255,255,255,.82);border:3px solid var(--ink);
+  border-radius:11px;box-shadow:2px 2px 0 var(--ink);
+}
+.tp-sysbtn.tp-prac.is-on{ background:var(--accent3); }
+
+/* オーバーレイ(ガイド/メニュー) */
+#tp-overlay{ display:none; }
+#tp-overlay.show{
+  display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;z-index:60;
+  padding:24px;background:rgba(15,20,32,.72);
+}
+#tp-overlay .tp-panel{
+  width:100%;max-width:360px;max-height:88vh;overflow:auto;
+  background:var(--card);border:3px solid var(--ink);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px;text-align:center;
+}
+.tp-ptitle{ font-weight:900;font-size:22px;margin-bottom:8px; }
+.tp-pscore{ font-weight:900;font-family:ui-monospace,monospace;margin-bottom:6px; }
+.tp-guide{ text-align:left;margin:6px 0 14px; }
+.tp-gline{ padding:6px 0;border-bottom:2px dashed rgba(29,26,51,.15);line-height:1.5;font-size:14px; }
+.tp-gline b{ color:var(--accent); }
+.tp-note{ color:#5b566f;font-size:12px; }
+.tp-mrow{ display:flex;flex-direction:column;gap:10px; }
+.tp-mbtn{
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  font:inherit;font-weight:900;font-size:16px;color:var(--ink);cursor:pointer;
+  padding:13px 16px;background:#fff;border:3px solid var(--ink);
+  border-radius:13px;box-shadow:var(--shadow-sm);
+}
+.tp-mbtn.primary{ background:var(--accent3); }
+.tp-mbtn.ghost{ background:var(--bg2);font-size:14px;padding:10px 16px; }
+
+/* オーバーレイ表示中はスティック/攻撃ボタン/システムボタンを隠す */
+body.tp-modal #touchpad,
+body.tp-modal #tp-sys{ display:none !important; }
+
+/* ---- ①のGemショートカット(自動生成) ---- */
+.gem-cta{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;padding:14px;
+  border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow-sm);
+  background:linear-gradient(135deg, rgba(255,206,43,.28), rgba(47,211,165,.20));
+}
+.gem-badge{display:inline-block;font-weight:900;font-size:13px;color:#fff;background:var(--accent2);
+  border:2px solid var(--ink);border-radius:999px;padding:3px 12px;box-shadow:2px 2px 0 var(--ink)}
+.gem-cta-main{flex:1 1 220px;min-width:200px;font-size:14px;line-height:1.6}
+.gem-cta .btn{flex:0 0 auto}
+
+/* ---- 処理中オーバーレイ(読み込み・抽出中) ---- */
+#loading{display:none}
+#loading.show{
+  display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;z-index:100;background:rgba(29,26,51,.55);
+}
+#loading .loading-box{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  background:var(--card);border:3px solid var(--ink);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:24px 30px;font-weight:900;color:var(--ink);
+}
+#loading .spinner{
+  width:44px;height:44px;border-radius:50%;
+  border:5px solid var(--bg2);border-top-color:var(--accent);
+  animation:ld-spin .8s linear infinite;
+}
+@keyframes ld-spin{ to{ transform:rotate(360deg); } }
 
 .foot{border-top:3px solid var(--ink);margin-top:20px}
 .foot .wrap{padding:20px;color:#5b566f;font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}

@@ -12,9 +12,10 @@ export const ASSETS = {
 
 // --- スプライト抽出 ---
 // プレイヤー表のポーズ配置（5列×3行=15セル）。null は抽出しない。
+// 2段目5コマ目 jump_upper = ジャンプアッパー(上昇中)の専用ポーズ。
 export const POSES = [
   'idle','walk_start','walk1','walk2','crouch',
-  'atk_start','atk1','atk2','atk3',null,
+  'atk_start','atk1','atk2','atk3','jump_upper',
   'jump_up','jump_down','damage','knockback','down'
 ];
 // 敵表の配置（5×3）。各敵は移動2フレーム。
@@ -31,6 +32,7 @@ export const EX = { tol:120, minsz:200, inset:3 };
 export const GROUND_OFFSET = 40;   // 地面ライン = canvas.height - GROUND_OFFSET
 export const CLAMP_MARGIN  = 30;   // プレイヤーが画面端で止まる余白(px)
 export const GRAV = 0.9, JUMP_V = -16, MOVE_SPD = 3.2;
+export const JUMP_UPPER_V = -20;   // ジャンプアッパーの初速(通常ジャンプより速く上昇)
 export const TARGET_H  = 200;   // idle の身長をこの高さ(px)に正規化
 export const FOOT_SINK = 6;     // 足元を地面ラインより少し沈めて接地感を出す(px)
 // 吹っ飛びダウン→起き上がりまでの無敵フレーム。ダウン(約40f)+起き上がり直後の猶予を含める。
@@ -60,8 +62,9 @@ export const ENEMY_TYPES = {
   // tint は 'color' 合成で色相のみ差し替え(黒い輪郭・陰影の明暗は保たれる)。
   // stompBounceScale: 踏んだ時のバウンド倍率(大きいほど高く跳ね返され再踏みが難しい)
   // stompRefund:false = 踏んでも2段ジャンプを戻さない(無限バウンドでの一方的撃破を防ぐ)
-  giant_mushroom:{ speedMin:0.5, speedMax:0.8, hp:3, r:52, hue:280, fly:false, score:3, atkImmune:false, drawScale:1.5, spr:'walker', tint:'#a24be0', stompBounceScale:1.5, stompRefund:false }, // でかきのこ(紫, walkerの絵)
-  giant_tanuki:  { speedMin:0.4, speedMax:0.7, hp:8, r:76, hue:120, fly:false, score:5, atkImmune:false, drawScale:1.3, spr:'brute',  tint:'#3fbf5a', stompBounceScale:1.6, stompRefund:false }, // でかたぬき(緑, bruteの絵。ボス格で最大)
+  // stompImmune:true = 踏めるがダメージ0(でかいので踏み程度では倒せない→攻撃で倒す)
+  giant_mushroom:{ speedMin:0.5, speedMax:0.8, hp:3, r:52, hue:280, fly:false, score:3, atkImmune:false, drawScale:1.5, spr:'walker', tint:'#a24be0', stompBounceScale:1.5, stompRefund:false, stompImmune:true }, // でかきのこ(紫, walkerの絵)
+  giant_tanuki:  { speedMin:0.4, speedMax:0.7, hp:8, r:76, hue:120, fly:false, score:5, atkImmune:false, drawScale:1.3, spr:'brute',  tint:'#3fbf5a', stompBounceScale:1.6, stompRefund:false, stompImmune:true }, // でかたぬき(緑, bruteの絵。ボス格で最大)
 };
 // この体数を倒すごとに大型敵(でかきのこ/でかたぬき)を1体確定スポーンする。
 export const GIANT_SPAWN_EVERY = 30;
