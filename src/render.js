@@ -1,6 +1,6 @@
 // ===================== 描画 =====================
 import { FOOT_SINK, ENEMY_TYPES, ENEMY_DRAW_SCALE, DEATH_DUR, POP_DUR } from './config.js';
-import { stage, sctx, GROUND_Y, GAME, player, world, runtime, gfx } from './state.js';
+import { sctx, GROUND_Y, GAME, player, world, runtime, gfx, VIEW_W, VIEW_H } from './state.js';
 import { getAttackBox } from './player.js';
 
 // 大型敵の色替え用: 元絵の明暗(黒い輪郭・陰影・ハイライト)を保ったまま、
@@ -69,16 +69,16 @@ export function render(){
   // 背景:画像があれば描画、なければ従来のグラデ+単色地面
   if(gfx.bgReady && gfx.bgImg){
     sctx.imageSmoothingEnabled=false;   // ドット絵をくっきり
-    sctx.drawImage(gfx.bgImg,0,0,stage.width,stage.height);
+    sctx.drawImage(gfx.bgImg,0,0,VIEW_W,VIEW_H);
   } else {
-    const g=sctx.createLinearGradient(0,0,0,stage.height);
+    const g=sctx.createLinearGradient(0,0,0,VIEW_H);
     g.addColorStop(0,'#1a2438'); g.addColorStop(1,'#0f1420');
-    sctx.fillStyle=g; sctx.fillRect(0,0,stage.width,stage.height);
+    sctx.fillStyle=g; sctx.fillRect(0,0,VIEW_W,VIEW_H);
     // 地面
     sctx.fillStyle='#26304a';
-    sctx.fillRect(0,GROUND_Y,stage.width,stage.height-GROUND_Y);
+    sctx.fillRect(0,GROUND_Y,VIEW_W,VIEW_H-GROUND_Y);
     sctx.strokeStyle='rgba(255,255,255,.12)';
-    sctx.beginPath();sctx.moveTo(0,GROUND_Y+0.5);sctx.lineTo(stage.width,GROUND_Y+0.5);sctx.stroke();
+    sctx.beginPath();sctx.moveTo(0,GROUND_Y+0.5);sctx.lineTo(VIEW_W,GROUND_Y+0.5);sctx.stroke();
   }
   // 影
   const f=gfx.FR[currentPose()]||gfx.FR.idle;
@@ -116,41 +116,41 @@ export function render(){
 
 function drawReady(){
   sctx.fillStyle='rgba(0,0,0,.55)';
-  sctx.fillRect(0,0,stage.width,stage.height);
+  sctx.fillRect(0,0,VIEW_W,VIEW_H);
   sctx.textAlign='center';
-  let textY=stage.height/2;
+  let textY=VIEW_H/2;
   // タイトルロゴ(あれば上に配置)。ドット絵が荒れないよう拡大は整数倍＋スムージング無し。
   if(gfx.logoReady && gfx.logo){
     const lw0=gfx.logo.naturalWidth, lh0=gfx.logo.naturalHeight;
-    let z=Math.min((stage.width-60)/lw0, 250/lh0);
+    let z=Math.min((VIEW_W-60)/lw0, 250/lh0);
     z = z>=1 ? Math.floor(z) : z;   // 拡大は等倍(整数倍)、縮小のみ小数許容
     const lw=lw0*z, lh=lh0*z;
     sctx.imageSmoothingEnabled=false;
-    sctx.drawImage(gfx.logo, (stage.width-lw)/2, 30, lw, lh);
+    sctx.drawImage(gfx.logo, (VIEW_W-lw)/2, 30, lw, lh);
     textY = 30 + lh + 52;
   }
   const blink = (Math.floor(Date.now()/500)%2===0);
   sctx.fillStyle = blink ? '#fff' : '#9fb4d8';
   sctx.font='bold 30px sans-serif';
-  sctx.fillText('PRESS ENTER TO START', stage.width/2, textY);
+  sctx.fillText('PRESS ENTER TO START', VIEW_W/2, textY);
   sctx.fillStyle='#cfd8e8'; sctx.font='14px sans-serif';
-  sctx.fillText('Enter（またはスペース）でゲーム開始', stage.width/2, textY+30);
+  sctx.fillText('Enter（またはスペース）でゲーム開始', VIEW_W/2, textY+30);
   sctx.textAlign='left'; sctx.textBaseline='alphabetic';
 }
 
 // 一時停止メニュー（終了する/リトライする）
 function drawPauseMenu(){
   sctx.fillStyle='rgba(0,0,0,.62)';
-  sctx.fillRect(0,0,stage.width,stage.height);
+  sctx.fillRect(0,0,VIEW_W,VIEW_H);
   sctx.textAlign='center';
   sctx.fillStyle='#fff'; sctx.font='bold 34px sans-serif';
-  sctx.fillText('一時停止', stage.width/2, stage.height/2-46);
+  sctx.fillText('一時停止', VIEW_W/2, VIEW_H/2-46);
   sctx.font='20px sans-serif'; sctx.fillStyle='#fff';
-  sctx.fillText('リトライする（R）', stage.width/2, stage.height/2+6);
+  sctx.fillText('リトライする（R）', VIEW_W/2, VIEW_H/2+6);
   sctx.fillStyle='#9fb4d8';
-  sctx.fillText('終了する（Q）… 最初の画面へ', stage.width/2, stage.height/2+38);
+  sctx.fillText('終了する（Q）… 最初の画面へ', VIEW_W/2, VIEW_H/2+38);
   sctx.fillStyle='#cfd8e8'; sctx.font='15px sans-serif';
-  sctx.fillText('つづける（Esc）', stage.width/2, stage.height/2+70);
+  sctx.fillText('つづける（Esc）', VIEW_W/2, VIEW_H/2+70);
   sctx.textAlign='left';
 }
 
@@ -183,7 +183,7 @@ function drawDebug(){
   }
   // 凡例
   sctx.font='11px monospace'; sctx.fillStyle='#fff'; sctx.textAlign='left';
-  sctx.fillText('[D] 判定表示  赤=攻撃 緑=地上敵 青=飛敵 黄=接触/足元', 8, stage.height-10);
+  sctx.fillText('[D] 判定表示  赤=攻撃 緑=地上敵 青=飛敵 黄=接触/足元', 8, VIEW_H-10);
   sctx.restore();
 }
 
@@ -347,33 +347,33 @@ function drawHUD(){
   sctx.font='bold 18px monospace';
   const scoreText='SCORE '+GAME.score;
   const scoreW=sctx.measureText(scoreText).width;
-  hudPlate(stage.width-8-scoreW-16, 8, scoreW+16, 26);
+  hudPlate(VIEW_W-8-scoreW-16, 8, scoreW+16, 26);
   sctx.textAlign='right'; sctx.textBaseline='alphabetic';
   sctx.fillStyle='#fff';
-  sctx.fillText(scoreText, stage.width-16, 28);
+  sctx.fillText(scoreText, VIEW_W-16, 28);
   sctx.textAlign='left';
   if(runtime.PRACTICE){
     sctx.font='bold 13px monospace';
     const pText='練習モード（P解除／1-6で敵出現）';
     const pW=sctx.measureText(pText).width;
-    hudPlate(stage.width/2-pW/2-8, 8, pW+16, 22);
+    hudPlate(VIEW_W/2-pW/2-8, 8, pW+16, 22);
     sctx.fillStyle='#7fd'; sctx.textAlign='center';
-    sctx.fillText(pText, stage.width/2, 24);
+    sctx.fillText(pText, VIEW_W/2, 24);
     sctx.textAlign='left';
   }
 }
 function drawGameOver(){
   sctx.fillStyle='rgba(0,0,0,.6)';
-  sctx.fillRect(0,0,stage.width,stage.height);
+  sctx.fillRect(0,0,VIEW_W,VIEW_H);
   sctx.fillStyle='#fff'; sctx.textAlign='center';
   sctx.font='bold 40px sans-serif';
-  sctx.fillText('GAME OVER', stage.width/2, stage.height/2-40);
+  sctx.fillText('GAME OVER', VIEW_W/2, VIEW_H/2-40);
   sctx.font='20px monospace';
-  sctx.fillText('SCORE '+GAME.score, stage.width/2, stage.height/2-4);
+  sctx.fillText('SCORE '+GAME.score, VIEW_W/2, VIEW_H/2-4);
   sctx.font='15px sans-serif';
   sctx.fillStyle='#fff';
-  sctx.fillText('リトライする … Enter / R', stage.width/2, stage.height/2+34);
+  sctx.fillText('リトライする … Enter / R', VIEW_W/2, VIEW_H/2+34);
   sctx.fillStyle='#9fb4d8';
-  sctx.fillText('終了する（最初の画面へ）… Q', stage.width/2, stage.height/2+60);
+  sctx.fillText('終了する（最初の画面へ）… Q', VIEW_W/2, VIEW_H/2+60);
   sctx.textAlign='left';
 }

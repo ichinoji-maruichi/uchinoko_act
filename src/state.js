@@ -9,14 +9,19 @@ import { GROUND_OFFSET, nextItemTimer, POP_DUR } from './config.js';
 // --- キャンバス ---
 export const stage = document.getElementById('stage');
 export const sctx  = stage.getContext('2d');
-export const GROUND_Y = stage.height - GROUND_OFFSET;   // 接地ライン
+// 論理座標系のサイズ。ゲームの物理・配置はすべてこの座標で行う。
+// バックストア解像度(stage.width/height)は表示サイズ×dprへ後から広げる(loader.js fitStage)
+// ので、初期属性値(index.html: 800×450)をここで固定して論理サイズとして使う。
+export const VIEW_W = stage.width;
+export const VIEW_H = stage.height;
+export const GROUND_Y = VIEW_H - GROUND_OFFSET;   // 接地ライン
 
 // --- ゲーム全体の状態 ---
 export const GAME = { hp:3, maxHp:3, score:0, over:false, time:0 };
 
 // --- プレイヤー ---
 export const player = {
-  x: stage.width/2, y: GROUND_Y, vx:0, vy:0,
+  x: VIEW_W/2, y: GROUND_Y, vx:0, vy:0,
   facing:1,            // 1=右, -1=左
   onGround:true,
   state:'idle',        // idle/walk/crouch/jump/attack/hurt/knockback/down
@@ -91,7 +96,7 @@ export function resetGame(){
   runtime.killCount=0; runtime.giantsPending=0; runtime.paused=false;
   world.items=[]; runtime.itemTimer=nextItemTimer();
   world.pops=[];
-  player.x=stage.width/2; player.y=GROUND_Y; player.vx=0; player.vy=0;
+  player.x=VIEW_W/2; player.y=GROUND_Y; player.vx=0; player.vy=0;
   player.state='idle'; player.onGround=true; player.combo=null; player.airAttack=0;
   player.invuln=0; player.dying=false; player.hurtTimer=0; player.jumpsLeft=1;
   player.jumpUpper=false;

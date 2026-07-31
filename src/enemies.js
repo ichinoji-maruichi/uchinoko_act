@@ -1,6 +1,6 @@
 // ===================== 敵・戦闘 =====================
 import { ENEMY_TYPES, STOMP_BOUNCE, STOMP_REVIVE_DOUBLEJUMP, DEATH_DUR, GIANT_SPAWN_EVERY } from './config.js';
-import { stage, GROUND_Y, GAME, player, world, runtime, addPop } from './state.js';
+import { VIEW_W, GROUND_Y, GAME, player, world, runtime, addPop } from './state.js';
 import { getAttackBox } from './player.js';
 import { sfx } from './sfx.js';
 
@@ -43,7 +43,7 @@ export function spawnEnemy(type){
   const speed=T.speedMin+Math.random()*(T.speedMax-T.speedMin);
   world.enemies.push({
     type,
-    x: fromLeft ? -30 : stage.width+30,
+    x: fromLeft ? -30 : VIEW_W+30,
     y: T.fly ? GROUND_Y-105 : GROUND_Y,   // 飛ぶ敵: 地上攻撃は届かない高さ。立ち判定は頭まで届くので接触はする
     dir: fromLeft ? 1 : -1,
     speed, hp:T.hp, maxHp:T.hp,
@@ -150,7 +150,7 @@ export function updateEnemies(){
   // 掃除
   world.enemies=world.enemies.filter(e=>{
     if(e.dead) return e.deadT<DEATH_DUR;
-    return e.x>-60 && e.x<stage.width+60;
+    return e.x>-60 && e.x<VIEW_W+60;
   });
   if(player.invuln>0 && player.invuln<9999) player.invuln--;
 }

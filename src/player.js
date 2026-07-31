@@ -1,6 +1,6 @@
 // ===================== プレイヤー状態機械 =====================
 import { GRAV, JUMP_V, JUMP_UPPER_V, MOVE_SPD, CLAMP_MARGIN, LIGHT_COMBO, HEAVY_COMBO, DOWN_INVULN } from './config.js';
-import { stage, GROUND_Y, GAME, player, keys, runtime } from './state.js';
+import { VIEW_W, GROUND_Y, GAME, player, keys, runtime } from './state.js';
 import { sfx } from './sfx.js';
 import { bgm } from './bgm.js';
 
@@ -186,7 +186,7 @@ export function updatePlayer(){
 export function clampX(){
   const m=CLAMP_MARGIN;
   if(player.x<m)player.x=m;
-  if(player.x>stage.width-m)player.x=stage.width-m;
+  if(player.x>VIEW_W-m)player.x=VIEW_W-m;
 }
 
 // 攻撃判定ボックス(攻撃中のみ返す)。プレイヤーの前方に出す。

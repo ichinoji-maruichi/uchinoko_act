@@ -1,7 +1,7 @@
 // ===================== 読み込み（プレイヤー画像） =====================
 // 緑背景の5×3スプライト表をドラッグ&ドロップ/クリックで読み込む。
 import { TARGET_H, ASSETS } from './config.js';
-import { gfx, runtime, resetGame } from './state.js';
+import { gfx, runtime, resetGame, stage, sctx, VIEW_W, VIEW_H } from './state.js';
 import { detectKeyColor, extractAll } from './extract.js';
 import { startLoop } from './loop.js';
 import { bgm } from './bgm.js';
@@ -15,6 +15,25 @@ function showLoading(text){
 function hideLoading(){
   const el=document.getElementById('loading'); if(!el) return;
   el.classList.remove('show'); el.setAttribute('aria-hidden','true');
+}
+
+// キャンバスのバックストア解像度を「実表示サイズ×dpr」に合わせ、
+// 論理座標(VIEW_W×VIEW_H)→物理ピクセルへ拡大する基準トランスフォームを張る。
+// これで従来の「800×450 → CSS表示サイズ(例:900px)」というブラウザ側の二段目の拡縮
+// (ドット絵の線が間引かれて細く見える主因の一つ)をなくす。論理サイズは不変なので
+// キャラの見た目の大きさや当たり判定・物理は一切変わらない。
+export function fitStage(){
+  const wrap=document.getElementById('stageWrap');
+  if(!wrap || wrap.style.display==='none') return;   // 非表示中は正しく測れない
+  const cssW=stage.clientWidth;
+  if(!cssW) return;
+  const dpr=Math.min(3, Math.max(1, window.devicePixelRatio||1));   // 高dprでも上限3で暴走防止
+  const cssH=cssW*VIEW_H/VIEW_W;                       // 論理比を厳守してアスペクトのドリフトを防ぐ
+  stage.width =Math.round(cssW*dpr);
+  stage.height=Math.round(cssH*dpr);
+  // stage.width/height への代入でコンテキスト状態はリセットされるため基準変換を張り直す
+  sctx.setTransform(stage.width/VIEW_W, 0, 0, stage.height/VIEW_H, 0, 0);
+  sctx.imageSmoothingEnabled=false;
 }
 
 function loadFile(file){
@@ -49,6 +68,7 @@ function bootFromImage(img){
     runtime.SCALE = TARGET_H / gfx.FR.idle.h;
     setLandingVisible(false);
     document.getElementById('stageWrap').style.display='block';
+    fitStage();   // 表示直後の実サイズでバックストア解像度を確定
     window.scrollTo(0,0);
     hideLoading();
     enterReady();
@@ -84,6 +104,9 @@ export function backToLoader(){
 
 // ローダーUI(ドロップ・ファイル選択・お試しボタン)を配線する
 export function setupLoader(){
+  // 画面回転・リサイズ・ブラウザズーム(dpr変化)でバックストア解像度を追従させる
+  window.addEventListener('resize', fitStage);
+  window.addEventListener('orientationchange', fitStage);
   const drop=document.getElementById('drop');
   const fileInput=document.getElementById('file');
   drop.addEventListener('click',()=>fileInput.click());

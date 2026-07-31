@@ -1,7 +1,7 @@
 // ===================== アイテム =====================
 // 回復アイテムが空から落下。本物(ハート/heal)と偽物(ドクロ/fake)がある。
 import { ITEM_FALL_SPEED, ITEM_FAKE_RATE, ITEM_ATK_UP_SCALE, nextItemTimer } from './config.js';
-import { stage, GROUND_Y, GAME, player, world, runtime } from './state.js';
+import { VIEW_W, GROUND_Y, GAME, player, world, runtime } from './state.js';
 import { getAttackBox, hurtPlayer } from './player.js';
 import { sfx } from './sfx.js';
 
@@ -11,7 +11,7 @@ export function updateItems(){
     runtime.itemTimer--;
     if(runtime.itemTimer<=0){
       const fake=Math.random()<ITEM_FAKE_RATE;   // 偽物確率
-      world.items.push({ x:80+Math.random()*(stage.width-160), y:-20, r:16, taken:false, popT:0, fake });
+      world.items.push({ x:80+Math.random()*(VIEW_W-160), y:-20, r:16, taken:false, popT:0, fake });
       runtime.itemTimer=nextItemTimer();
     }
   }
