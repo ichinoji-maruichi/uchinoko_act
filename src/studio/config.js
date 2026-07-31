@@ -28,10 +28,12 @@ export const CLIPS = {
 
 // お試しマネキン(ゲームの既定キャラ)
 export const TEMPLATE_SRC = 'assets/player_default.png';
-// ダウンロードできるテンプレート2種
+// ダウンロードできるテンプレート3種
 //  A: 通常版 / B: 揺れ物・装飾が多いキャラ向けの拡張版(コマ内の余白が広い)
+//  C: 頭身アップ版(A/Bより頭身が高い。Gemには未搭載＝手動生成のみ)
 export const TEMPLATE_A_SRC = 'assets/sprite-template-a.png';
 export const TEMPLATE_B_SRC = 'assets/sprite-template-b.png';
+export const TEMPLATE_C_SRC = 'assets/sprite-template-c.png';
 
 // 生成プロンプト(GeminiやChatGPT等に貼り付けて使う)
 export const GEN_PROMPT = `添付の1枚目はキャラクターイラスト、2枚目はスプライト表のテンプレートです。

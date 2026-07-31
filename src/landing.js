@@ -1,7 +1,7 @@
 // ===================== ランディング（ヒーロー演出＋準備セクション） =====================
 import { POSES, COLS, ROWS, EX } from './config.js';
 import * as core from './extract-core.js';
-import { GEN_PROMPT, TEMPLATE_A_SRC, TEMPLATE_B_SRC } from './studio/config.js';
+import { GEN_PROMPT, TEMPLATE_A_SRC, TEMPLATE_B_SRC, TEMPLATE_C_SRC } from './studio/config.js';
 import { TEMPLATE_SRC } from './studio/config.js';
 
 const $ = id => document.getElementById(id);
@@ -33,6 +33,7 @@ function setupPrepare(){
   });
   $('dlTplA').addEventListener('click',()=>dlTemplate(TEMPLATE_A_SRC,'sprite-template-a.png'));
   $('dlTplB').addEventListener('click',()=>dlTemplate(TEMPLATE_B_SRC,'sprite-template-b.png'));
+  $('dlTplC').addEventListener('click',()=>dlTemplate(TEMPLATE_C_SRC,'sprite-template-c.png'));
 }
 
 // ---------- ヒーローの動くスプライト ----------

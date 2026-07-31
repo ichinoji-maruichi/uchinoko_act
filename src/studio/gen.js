@@ -1,7 +1,7 @@
 // ===================== 生成補助（ルートB: 手動） =====================
 // プロンプトをコピーして、外部の画像生成チャット(Gemini/ChatGPT等)で作る。
-// テンプレートは A(通常版) / B(拡張版) の2種類をダウンロードできる。
-import { GEN_PROMPT, TEMPLATE_A_SRC, TEMPLATE_B_SRC } from './config.js';
+// テンプレートは A(通常版) / B(拡張版) / C(頭身アップ版) の3種類をダウンロードできる。
+import { GEN_PROMPT, TEMPLATE_A_SRC, TEMPLATE_B_SRC, TEMPLATE_C_SRC } from './config.js';
 import { $, saveBlob } from './state.js';
 
 async function downloadTemplate(src, name){
@@ -30,4 +30,5 @@ export function setupGen(){
   $('copyPromptBtn').addEventListener('click', copyPrompt);
   $('dlTemplateA').addEventListener('click', ()=>downloadTemplate(TEMPLATE_A_SRC,'sprite-template-a.png'));
   $('dlTemplateB').addEventListener('click', ()=>downloadTemplate(TEMPLATE_B_SRC,'sprite-template-b.png'));
+  $('dlTemplateC').addEventListener('click', ()=>downloadTemplate(TEMPLATE_C_SRC,'sprite-template-c.png'));
 }
