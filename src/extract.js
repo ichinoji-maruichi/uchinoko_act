@@ -1,9 +1,28 @@
 // ===================== スプライト抽出（ゲーム用ラッパ） =====================
 // 実処理は共有コア(extract-core.js)。ここではゲームの state(gfx) と結線する。
 
-import { POSES, ESPR_MAP, COLS, ROWS, EX } from './config.js';
+import { POSES, ESPR_MAP, COLS, ROWS, EX, LYING_POSES, LYING_ANCHOR_FRAC } from './config.js';
 import { gfx } from './state.js';
 import * as core from './extract-core.js';
+
+// 横たわりポーズの接地アンカー(footY)を「本体の下端」に補正する。
+// 各行の前景ピクセル数を数え、最大行幅の LYING_ANCHOR_FRAC 以上ある一番下の行を本体下端とみなす。
+// 髪・尻尾など細い突起(=行幅が小さい)はこの下に来ても無視されるので、本体が接地する。
+// 揺れ物がないキャラは最下行付近も十分な幅があるため footY≒bh となり従来と変わらない。
+function lyingFootY(res){
+  const { canvas, w, h } = res;
+  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  const rows = new Array(h).fill(0); let maxc = 0;
+  for(let y=0; y<h; y++){
+    let c=0; const base=y*w*4;
+    for(let x=0; x<w; x++) if(d[base+x*4+3] > 128) c++;
+    rows[y]=c; if(c>maxc) maxc=c;
+  }
+  if(maxc===0) return h;
+  const th = maxc * LYING_ANCHOR_FRAC;
+  for(let y=h-1; y>=0; y--) if(rows[y] >= th) return y+1;
+  return h;
+}
 
 // プレイヤー表: 四隅+中央6点でキー色を検出し gfx.KEY に格納
 export function detectKeyColor(){
@@ -18,7 +37,11 @@ export function extractAll(){
   for(let idx=0; idx<COLS*ROWS; idx++){
     const pose=POSES[idx]; if(pose===null) continue;
     const res=core.extractCell(gfx.srcCtx, W, H, gfx.KEY, idx%COLS, (idx/COLS)|0, opts);
-    if(res) gfx.FR[pose]=res;
+    if(res){
+      // 横たわりポーズは本体下端を接地アンカーにする(髪・尻尾の垂れ下がりで浮くのを防ぐ)
+      if(LYING_POSES.includes(pose)) res.footY = lyingFootY(res);
+      gfx.FR[pose]=res;
+    }
   }
 }
 
