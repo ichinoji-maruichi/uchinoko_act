@@ -74,6 +74,29 @@ export const sfx = {
   coin(){ if(isMuted())return; tone(988,988,0.06,'square',0.35); tone(1319,1319,0.12,'square',0.35,0.06); },
   // 被弾
   hurt(){ if(isMuted())return; tone(220,70,0.20,'square',0.4); noise(0.18,0.4,0,1000); },
+  // 開始カウント（READY / 3 / 2 / 1）: 短いビープ
+  count(){ if(isMuted())return; tone(880,880,0.07,'square',0.3); },
+  // ダッシュ（対戦モード）: short な擦過音
+  dash(){ if(isMuted())return; noise(0.09,0.22,0,2200); tone(220,520,0.08,'triangle',0.14); },
+  // ガード成功: 硬い「コッ」。ダメージ音と区別できるよう低めで短く
+  guard(){ if(isMuted())return; tone(260,150,0.07,'square',0.30); noise(0.05,0.30,0,700); },
+  // ガードクラッシュ: 「ガシャン」と崩れる音
+  crush(){ if(isMuted())return;
+    tone(700,120,0.22,'sawtooth',0.42); tone(300,80,0.26,'square',0.28,0.03); noise(0.22,0.45,0,1800);
+  },
+  // 相殺（対戦モードのブロッキング成立）: 金属的な「キィン!」
+  clash(){ if(isMuted())return;
+    tone(1800,900,0.10,'square',0.32); tone(2600,1400,0.12,'triangle',0.26,0.01); noise(0.06,0.22,0,5000);
+  },
+  // KO（対戦の決着の一撃）: 重い衝撃＋余韻
+  ko(){ if(isMuted())return;
+    tone(400,80,0.28,'sawtooth',0.5); tone(200,60,0.34,'square',0.32,0.02); noise(0.26,0.5,0,800);
+  },
+  // 勝利（対戦で人間側が勝ったとき。上昇 C-E-G-C）
+  win(){ if(isMuted())return;
+    tone(523,523,0.10,'triangle',0.4); tone(659,659,0.10,'triangle',0.4,0.10);
+    tone(784,784,0.10,'triangle',0.4,0.20); tone(1046,1046,0.30,'triangle',0.4,0.30);
+  },
   // ゲームオーバー（下降 A-F-C）
   gameover(){ if(isMuted())return; tone(440,415,0.18,'triangle',0.4); tone(349,330,0.20,'triangle',0.4,0.18); tone(262,247,0.40,'triangle',0.4,0.40); },
 };

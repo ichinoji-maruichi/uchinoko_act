@@ -125,6 +125,54 @@ h3{font-size:19px;font-weight:900}
 .drop b{color:var(--accent)}
 input[type=file]{display:none}
 
+/* ---- 対戦格闘モード（③ 2枚投入） ---- */
+.vs-slots{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;margin-top:14px}
+.vs-slot{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.vs-slot-title{font-weight:900;font-size:15px}
+.vs-slot .vs-drop{padding:20px 14px;font-size:14px}
+/* 読み込み済みのスロットはミント地にして一目で分かるように */
+.vs-drop.filled{background:var(--mint);border-style:solid}
+.vs-prev{display:block;width:100%;max-width:150px;height:160px;margin:0 auto;
+  background:var(--bg2);border:3px solid var(--ink);border-radius:12px}
+.vs-slot-vs{align-self:center;font-weight:900;font-size:26px;color:var(--coral);
+  -webkit-text-stroke:1px var(--ink);padding-top:60px}
+
+/* ---- 対戦: キャラ選択画面 ---- */
+#vsSelect{display:none;padding:26px 0}
+.vs-sel-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;margin-top:14px}
+.vs-sel-mid{font-weight:900;font-size:34px;color:var(--coral);-webkit-text-stroke:1.5px var(--ink);text-align:center}
+.vs-sel-card{display:flex;flex-direction:column;align-items:center;gap:10px;
+  color:var(--ink);background:#fff;padding:16px 14px;
+  border:3px solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow)}
+/* ドラッグ中のカード(画像を差し替えられることを示す) */
+.vs-sel-card.hot{background:var(--bg2);border-style:dashed}
+.vs-sel-main{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;
+  font:inherit;cursor:pointer;color:inherit;background:none;border:0;padding:0;
+  transition:transform .05s}
+.vs-sel-main:hover{transform:translateY(-2px)}
+.vs-sel-main:active{transform:translateY(2px)}
+.vs-sel-card canvas{width:100%;max-width:180px;height:200px;background:var(--bg2);
+  border:3px solid var(--ink);border-radius:12px}
+/* 画像差し替えボタン(主役ではないので控えめに) */
+.vs-sel-swap{font:inherit;font-weight:900;font-size:13px;color:var(--ink);cursor:pointer;
+  padding:7px 14px;background:#fff;border:3px solid var(--ink);border-radius:10px;
+  box-shadow:var(--shadow-sm);transition:transform .05s, box-shadow .05s}
+.vs-sel-swap:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink);background:var(--bg2)}
+.vs-sel-swap:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.vs-sel-name{font-weight:900;font-size:16px;word-break:break-all}
+.vs-sel-pick{font-size:13px;font-weight:900;color:#fff;background:var(--accent2);
+  padding:6px 14px;border:3px solid var(--ink);border-radius:10px;box-shadow:var(--shadow-sm)}
+.vs-diff{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:18px;
+  padding:12px 16px;background:var(--bg2);border:3px solid var(--ink);border-radius:14px}
+.vs-diff-label{font-weight:900}
+.vs-diff label{display:inline-flex;align-items:center;gap:6px;font-weight:700;cursor:pointer}
+
+/* 狭い画面では縦積み（VSの区切りは横線代わりに中央寄せ） */
+@media (max-width:720px){
+  .vs-slots,.vs-sel-grid{grid-template-columns:1fr}
+  .vs-slot-vs{padding-top:0;text-align:center}
+}
+
 /* ---- スプライト作成のヒント ---- */
 .tips{margin:12px 0 0;padding-left:1.15em;line-height:1.85}
 .tips li{margin-bottom:9px;color:#3a3550}
@@ -139,8 +187,30 @@ input[type=file]{display:none}
 #stageWrap{display:none;padding:26px 0}
 #stage{width:100%;max-width:900px;display:block;margin:0 auto;background:#0f1420;
   border:4px solid var(--ink);border-radius:14px;box-shadow:var(--shadow)}
-.game-hint{max-width:900px;margin:12px auto 0;color:#5b566f;font-size:13px;line-height:1.9;text-align:center}
-.game-hint .key{font-size:12px;margin:2px}
+/* ゲーム画面下のボタン列（操作方法／練習／ミュート／メニュー） */
+.game-hint{max-width:900px;margin:12px auto 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.hint-btn{font:inherit;font-weight:900;font-size:14px;color:var(--ink);cursor:pointer;
+  padding:9px 18px;background:#fff;border:3px solid var(--ink);border-radius:12px;
+  box-shadow:var(--shadow-sm);transition:transform .05s, box-shadow .05s}
+.hint-btn:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)}
+.hint-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.hint-btn.is-on{background:var(--mint)}
+.hint-btn.is-off{background:#d8d4e4;color:#6c6784}
+
+/* 操作方法パネル */
+#helpModal{position:fixed;inset:0;z-index:60;display:none;place-items:center;
+  padding:20px;background:rgba(29,26,51,.55)}
+#helpModal.show{display:grid}
+.help-box{width:min(560px,100%);max-height:86vh;overflow:auto;background:var(--card);
+  border:3px solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.help-box h3{margin:0 0 14px;font-size:20px}
+.help-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start;
+  padding:8px 0;border-top:2px dashed rgba(29,26,51,.15);font-size:14px}
+.help-row:first-of-type{border-top:0}
+.help-key{font-weight:900;background:var(--bg2);border:2px solid var(--ink);border-radius:8px;
+  padding:3px 8px;text-align:center;white-space:nowrap}
+.help-box .btn{margin-top:16px;width:100%;justify-content:center}
+@media (max-width:520px){ .help-row{grid-template-columns:1fr;gap:4px} }
 
 /* ---- タッチ操作パッド(スマホのみ) ---- */
 /* 既定は非表示。タッチ端末(has-touch)でゲーム中(game-active)のときだけ出す。 */
@@ -194,6 +264,22 @@ body.has-touch.game-active #touchpad{
 .tp-btn.tp-light{background:var(--mint)}
 .tp-btn.tp-heavy{background:var(--coral)}
 .tp-btn.is-on{transform:translate(2px,2px);box-shadow:none;opacity:1;filter:brightness(1.08)}
+
+/* ガード/ダッシュは対戦モードだけ出す。1人用では邪魔なので消す。 */
+.tp-vsonly{display:none}
+body.mode-vs #touchpad .tp-vsonly{display:flex}
+/* 逆に練習モードは1人用だけ(対戦には敵がいない) */
+body.mode-vs #tp-sys .tp-actiononly{display:none}
+.tp-btn.tp-guard,.tp-btn.tp-dash{width:72px;height:72px;border-radius:50%;font-size:13px}
+.tp-btn.tp-guard{background:var(--accent3)}
+.tp-btn.tp-dash{background:#fff}
+/* 対戦時は3行に組み替える: 上段=ガード/ダッシュ, 中段=ジャンプ, 下段=弱/強 */
+body.mode-vs #touchpad .tp-guard{grid-column:1;grid-row:1;margin-left:-44px}
+body.mode-vs #touchpad .tp-dash {grid-column:2;grid-row:1}
+body.mode-vs #touchpad .tp-jump {grid-column:1;grid-row:2;margin:0 0 0 -44px}
+body.mode-vs #touchpad .tp-light{grid-column:1;grid-row:3}
+body.mode-vs #touchpad .tp-heavy{grid-column:2;grid-row:3}
+body.mode-vs #touchpad .tp-actions{grid-auto-rows:76px;gap:12px}
 
 /* スマホのゲーム中はサイトのヘッダ/フッタを確実に隠す(no-scroll・没入) */
 body.has-touch.game-active #siteHeader,

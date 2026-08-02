@@ -2,7 +2,7 @@
 // 回復アイテムが空から落下。本物(ハート/heal)と偽物(ドクロ/fake)がある。
 import { ITEM_FALL_SPEED, ITEM_FAKE_RATE, ITEM_ATK_UP_SCALE, nextItemTimer } from './config.js';
 import { VIEW_W, GROUND_Y, GAME, player, world, runtime } from './state.js';
-import { getAttackBox, hurtPlayer } from './player.js';
+import { getAttackBox, hurtFighter } from './player.js';
 import { sfx } from './sfx.js';
 
 export function updateItems(){
@@ -15,7 +15,7 @@ export function updateItems(){
       runtime.itemTimer=nextItemTimer();
     }
   }
-  const atkBox=getAttackBox();
+  const atkBox=getAttackBox(player);
   for(const it of world.items){
     if(it.taken){ it.popT++; continue; }
     it.y += ITEM_FALL_SPEED;
@@ -29,7 +29,7 @@ export function updateItems(){
     if(hit){
       it.taken=true; it.popT=0;
       if(it.fake){ GAME.score++; sfx.coin(); }          // 偽物: 倒してスコア
-      else if(GAME.hp<GAME.maxHp){ GAME.hp++; sfx.heal(); } // 本物: 回復
+      else if(player.hp<player.maxHp){ player.hp++; sfx.heal(); } // 本物: 回復
       else { GAME.score++; sfx.coin(); }                 // 本物満タン: スコア
       continue;
     }
@@ -39,7 +39,7 @@ export function updateItems(){
       if(!inHurt){
         const dx=Math.abs(it.x-player.x);
         const dy=Math.abs(it.y-(player.y-70));
-        if(dx<it.r+16 && dy<70){ hurtPlayer(it.x); it.taken=true; it.popT=8; }
+        if(dx<it.r+16 && dy<70){ hurtFighter(player, it.x); it.taken=true; it.popT=8; }
       }
     }
     // 地面に落ちたら消滅

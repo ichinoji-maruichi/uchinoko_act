@@ -38,6 +38,7 @@
     <nav class="nav">
       <a href="#prepare">①キャラを用意</a>
       <a href="#play">②あそぶ</a>
+      <a href="#versus">③対戦</a>
       <a href="#help">作成のコツ</a>
     </nav>
   </div>
@@ -132,6 +133,36 @@
     </div>
   </div></section>
 
+  <!-- ③ 対戦格闘モード -->
+  <section id="versus"><div class="wrap">
+    <div class="card">
+      <div class="sec-head"><span class="badge" style="background:var(--coral)">VS</span><h2>対戦格闘モードであそぶ</h2></div>
+      <p class="muted" style="margin-top:4px">
+        スプライト表を<b>2枚</b>読み込むと、好きな方を操作してCPUと対戦できます。<br>
+        先に体力がなくなった方が負け。↓でガード、方向キー2回押しでダッシュが追加されています。
+      </p>
+      <div class="vs-slots">
+        <div class="vs-slot">
+          <div class="vs-slot-title">キャラ1</div>
+          <div id="dropVs1" class="drop vs-drop">ドラッグ、または<b>クリックして選択</b></div>
+          <input type="file" id="fileVs1" accept="image/*">
+          <canvas id="prevVs1" class="vs-prev" width="150" height="160"></canvas>
+          <button id="sampleVs1" class="btn ghost">サンプルキャラを使う</button>
+        </div>
+        <div class="vs-slot-vs">VS</div>
+        <div class="vs-slot">
+          <div class="vs-slot-title">キャラ2</div>
+          <div id="dropVs2" class="drop vs-drop">ドラッグ、または<b>クリックして選択</b></div>
+          <input type="file" id="fileVs2" accept="image/*">
+          <canvas id="prevVs2" class="vs-prev" width="150" height="160"></canvas>
+          <button id="sampleVs2" class="btn ghost">サンプルキャラを使う</button>
+        </div>
+      </div>
+      <div id="vsStatus" class="status"></div>
+      <div style="margin-top:12px"><button id="vsGo" class="btn pink lg" disabled>▶ キャラを選ぶ</button></div>
+    </div>
+  </div></section>
+
   <!-- スプライト作成のヒント -->
   <section id="help"><div class="wrap">
     <div class="card">
@@ -160,9 +191,12 @@
         　この場合、<b>無理に1コマだけ修正しようとすると全然上手くいかずに沼ります。</b><br>
         　なので、<b>再生成</b>して正確なパターンで表示されるのを祈った方が良いです。<br>
         ・一度正確なパターンができれば、そのパターンを参照してパターンを維持しつつ、テイストを変更してもらうなどができると思います。<br>
-        ・グリッドのガイド線にキャラが接触していないか確認してください。接触していた場合、ガイド線までキャラとして取り込まれる可能性があります。<br>
+        ・グリッドのガイド線にキャラが接触していないか確認してください。接触していた場合、ガイド線までキャラとして取り込まれる可能性があります。実はグリッド線が無くても大丈夫なので、不要な方は消しても大丈夫です。（あった方がAIに修正依頼する場合などに指定と認識がされやすい）<br>
         ・生成されたスプライトを手動で修正しても問題ありませんが、1つのモーションはグリッド内に収まるようにしてください。<br>
-        ・Geminiのwatermarkにキャラが重ならないように配置しています。watermarkも透過色として扱われるので付いたままでも大丈夫です。</li>
+        ・Geminiのwatermarkにキャラが重ならないように配置しています。watermarkも透過色として扱われるので付いたままでも大丈夫です。<br>
+        ・スプライトシートは3x5に自動分割して切り出して使用するようにしています。なので、スプライトシートの解像度は自由にしていただいても大丈夫です。</li>
+        <li><b>ゲーム中での表示について</b><br>
+        ・生成されるスプライトシートの解像度にバラつきがあるため、<b>ゲーム中では固定値に拡縮して表示</b>しています。そのため、実際のスプライトと見え方が変わり、線が細くなったり色味が変わったりする場合がありますがご了承ください。</li>
         <li><b>免責・その他</b><br>
         ・生成されたスプライトやスクリーンショットは自由に公開・配布していただいてかまいません。公開・配布に伴う一切の責任は本サイトは負いませんのでご了承ください。<br>
         ・本サイトへのリンクはご自由に行ってください。喜びます。<br>
@@ -173,19 +207,51 @@
   </div></section>
 </main>
 
+<!-- ===== 対戦: キャラ選択画面（2枚読み込み後に表示） ===== -->
+<div id="vsSelect"><div class="wrap">
+  <div class="card">
+    <div class="sec-head"><span class="badge" style="background:var(--coral)">VS</span><h2>操作するキャラを選ぶ</h2></div>
+    <p class="muted" style="margin-top:2px">選ばなかった方が、CPUの対戦相手になります。</p>
+    <div class="vs-sel-grid">
+      <div id="selCard1" class="vs-sel-card">
+        <button id="selVs1" class="vs-sel-main" type="button">
+          <canvas id="selPrev1" width="180" height="200"></canvas>
+          <span id="selName1" class="vs-sel-name">キャラ1</span>
+          <span class="vs-sel-pick">このキャラであそぶ</span>
+        </button>
+        <button id="selSwap1" class="vs-sel-swap" type="button">画像を変更</button>
+        <input type="file" id="selFile1" accept="image/*">
+      </div>
+      <div class="vs-sel-mid">VS</div>
+      <div id="selCard2" class="vs-sel-card">
+        <button id="selVs2" class="vs-sel-main" type="button">
+          <canvas id="selPrev2" width="180" height="200"></canvas>
+          <span id="selName2" class="vs-sel-name">キャラ2</span>
+          <span class="vs-sel-pick">このキャラであそぶ</span>
+        </button>
+        <button id="selSwap2" class="vs-sel-swap" type="button">画像を変更</button>
+        <input type="file" id="selFile2" accept="image/*">
+      </div>
+    </div>
+    <div id="vsSelStatus" class="status"></div>
+    <div class="vs-diff">
+      <span class="vs-diff-label">CPUの強さ</span>
+      <label><input type="radio" name="cpuLevel" value="easy">よわい</label>
+      <label><input type="radio" name="cpuLevel" value="normal" checked>ふつう</label>
+      <label><input type="radio" name="cpuLevel" value="hard">つよい</label>
+    </div>
+    <div style="margin-top:16px"><button id="vsBack" class="btn ghost">← 読み込み画面に戻る</button></div>
+  </div>
+</div></div>
+
 <!-- ===== ゲーム画面（読み込み後に表示） ===== -->
 <div id="stageWrap"><div class="wrap">
   <canvas id="stage" width="800" height="450"></canvas>
   <div class="game-hint">
-    <span class="key">←</span><span class="key">→</span> 移動
-    <span class="key">↑</span> ジャンプ
-    <span class="key">↓</span> しゃがみ
-    <span class="key">Z</span> 弱
-    <span class="key">X</span> 強
-    <span class="key">↑</span>+<span class="key">Z</span> ジャンプアッパー
-    <span class="key">P</span> 練習
-    <span class="key">M</span> ミュート
-    <span class="key">Esc</span> メニュー
+    <button id="hintHelp"  class="hint-btn" type="button">操作方法</button>
+    <button id="hintPrac"  class="hint-btn" type="button">練習</button>
+    <button id="hintMute"  class="hint-btn" type="button">ミュート</button>
+    <button id="hintMenu"  class="hint-btn" type="button">メニュー</button>
   </div>
 </div></div>
 
@@ -193,6 +259,15 @@
   <span>処理はすべてこのページ内で完結します。</span>
   © 2026 <a href="https://ichinoji-maruichi.github.io/">マルイチソフト</a>うんぽこ All Rights Reserved.
 </div></footer>
+
+<!-- 操作方法パネル（ゲーム画面の「操作方法」ボタンから開く） -->
+<div id="helpModal" aria-hidden="true">
+  <div class="help-box">
+    <h3 id="helpTitle">操作方法</h3>
+    <div id="helpBody"></div>
+    <button id="helpClose" class="btn pink" type="button">閉じる</button>
+  </div>
+</div>
 
 <!-- 処理中オーバーレイ(読み込み・スプライト抽出中に表示) -->
 <div id="loading" aria-hidden="true">

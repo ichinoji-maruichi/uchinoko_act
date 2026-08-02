@@ -1,7 +1,7 @@
 // ===================== 敵・戦闘 =====================
 import { ENEMY_TYPES, STOMP_BOUNCE, STOMP_REVIVE_DOUBLEJUMP, DEATH_DUR, GIANT_SPAWN_EVERY } from './config.js';
 import { VIEW_W, GROUND_Y, GAME, player, world, runtime, addPop } from './state.js';
-import { getAttackBox } from './player.js';
+import { getAttackBox, hurtFighter } from './player.js';
 import { sfx } from './sfx.js';
 
 // 敵を倒す共通処理(スコア加算+ポップ表示)。死ぬ箇所は必ずここを通す。
@@ -69,7 +69,7 @@ export function updateEnemies(){
   if(!runtime.PRACTICE && runtime.giantsPending>0){ spawnGiant(); runtime.giantsPending--; }
 
   // プレイヤーの攻撃判定矩形(攻撃中のみ)
-  const atkBox=getAttackBox();
+  const atkBox=getAttackBox(player);
 
   for(const e of world.enemies){
     if(e.dead){ e.deadT++; continue; }
@@ -80,10 +80,10 @@ export function updateEnemies(){
     const ecx=e.x, ecy=e.y-e.r;   // 敵の判定中心
 
     // 1) 攻撃ヒット(atkImmuneな敵=rusherには効かない)
-    if(!e.atkImmune && atkBox && e.lastSwing!==runtime.swingId &&
+    if(!e.atkImmune && atkBox && e.lastSwing!==player.swingId &&
        Math.abs(e.x-atkBox.cx)<atkBox.hw+e.r &&
        Math.abs(ecy-atkBox.cy)<atkBox.hh+e.r){
-      e.lastSwing=runtime.swingId;
+      e.lastSwing=player.swingId;
       e.hp-=(atkBox.dmg||1); e.hitFlash=6;
       e.x += atkBox.dir*6;
       if(e.hp<=0){ killEnemy(e); } else { sfx.hit(atkBox.dmg||1); }
@@ -124,27 +124,8 @@ export function updateEnemies(){
       const eTop=ecy-e.r, eBottom=ecy+e.r;
       const overlapX = dxS < e.r+16;
       const overlapY = eBottom>pTop && eTop<pBottom;
-      if(overlapX && overlapY){
-        GAME.hp--; sfx.hurt();
-        player.jumpUpper=false;
-        const kbDir = (player.x<e.x?-1:1);
-        if(player.onGround){
-          // 地上 → ダメージモーション(操作不能・無敵)
-          player.state='hurt'; player.hurtTimer=28; player.invuln=60;
-          player.vx=kbDir*3;
-        } else {
-          // 空中 → 吹っ飛び
-          player.state='knockback'; player.invuln=75;
-          player.vx=kbDir*5; player.vy=-8;
-        }
-        if(GAME.hp<=0){
-          GAME.hp=0;
-          // 致命傷: 吹っ飛ばしてダウン→終了。復帰不可(dying)。
-          player.dying=true;
-          player.state='knockback'; player.invuln=9999;
-          player.vx=kbDir*6; player.vy=-11; player.onGround=false;
-        }
-      }
+      // 被弾(のけぞり/吹っ飛び/致命傷)は偽アイテムと共通処理
+      if(overlapX && overlapY) hurtFighter(player, e.x);
     }
   }
   // 掃除
@@ -152,5 +133,4 @@ export function updateEnemies(){
     if(e.dead) return e.deadT<DEATH_DUR;
     return e.x>-60 && e.x<VIEW_W+60;
   });
-  if(player.invuln>0 && player.invuln<9999) player.invuln--;
 }

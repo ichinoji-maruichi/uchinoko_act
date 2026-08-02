@@ -4,9 +4,10 @@
 // true/false するだけ。ゲームロジック(player.js など)には一切触れない。
 //   ・左右 = 移動  ・下 = しゃがみ  ・上 = ジャンプ(上+弱でジャンプアッパー)
 // キーボードと自然に共存する。
-import { keys, runtime, GAME, world } from './state.js';
+import { keys, runtime, GAME, world, vs } from './state.js';
 import { startGame } from './input.js';
 import { backToLoader } from './loader.js';
+import { backToCharSelect } from './vsui.js';
 
 // タッチ端末判定: 指などの粗いポインタを持つ端末のみ対象(PCは従来どおりキーボード)。
 function isTouchDevice(){
@@ -46,11 +47,14 @@ export function setupTouch(){
   let stickId = null, baseX = 0, baseY = 0;
   // ジャンプは「スティック上」と「専用ジャンプボタン」の両方から入る。
   // 互いに keys.up を奪い合わないよう、それぞれの状態を OR して keys.up に反映する。
-  let stickUp = false;
+  let stickUp = false, stickDown = false;
   const jumpPointers = new Set();   // ジャンプボタンを押している pointerId 群
+  // ガードも「スティック下」と「専用ガードボタン」の両方から入るので、同じく OR で合成する。
+  const guardPointers = new Set();
   function applyUp(){ keys.up = stickUp || jumpPointers.size>0; }
+  function applyDown(){ keys.down = stickDown || guardPointers.size>0; }
 
-  function clearDir(){ keys.left=keys.right=keys.down=false; stickUp=false; applyUp(); }
+  function clearDir(){ keys.left=keys.right=false; stickDown=false; stickUp=false; applyUp(); applyDown(); }
 
   // 触れていない間は左の定位置(CSSのhome)に薄く表示 → 操作できると分かるように。
   // 触れたらその位置へ移動し、離したら定位置へ戻る。
@@ -82,9 +86,9 @@ export function setupTouch(){
     // 左右＝移動 / 下＝しゃがみ / 上＝ジャンプ(専用ジャンプボタンと併用)
     keys.left  = dx < -DEAD;
     keys.right = dx >  DEAD;
-    keys.down  = dy >  DEAD;
+    stickDown  = dy >  DEAD;
     stickUp    = dy < -DEAD;
-    applyUp();
+    applyUp(); applyDown();
   });
   function endStick(e){
     if(e.pointerId!==stickId) return;
@@ -127,7 +131,34 @@ export function setupTouch(){
   }
   addEventListener('pointerup', releaseJump);
   addEventListener('pointercancel', releaseJump);
+  // ガード = 押しっぱなしで keys.down(=しゃがみ)。スティック下でも同じことができる。
+  const guardBtn = document.createElement('button');
+  guardBtn.type='button'; guardBtn.className='tp-btn tp-guard tp-vsonly'; guardBtn.textContent='ガード';
+  guardBtn.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(isMenuTap()){ startGame(); return; }
+    guardPointers.add(e.pointerId); applyDown(); guardBtn.classList.add('is-on');
+  });
+  function releaseGuard(e){
+    if(guardPointers.delete(e.pointerId)){ applyDown(); if(guardPointers.size===0) guardBtn.classList.remove('is-on'); }
+  }
+  addEventListener('pointerup', releaseGuard);
+  addEventListener('pointercancel', releaseGuard);
+
+  // ダッシュ = 単独で前方向、スティックで後ろを入れながら押すと後ろへ(player.js側で判定)。
+  // 押した瞬間だけ true にすればよいので、次のフレームで自動的に戻す。
+  const dashBtn = document.createElement('button');
+  dashBtn.type='button'; dashBtn.className='tp-btn tp-dash tp-vsonly'; dashBtn.textContent='ダッシュ';
+  dashBtn.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    if(isMenuTap()){ startGame(); return; }
+    keys.dash = true; dashBtn.classList.add('is-on');
+    setTimeout(()=>{ keys.dash = false; dashBtn.classList.remove('is-on'); }, 90);
+  });
+
   actions.appendChild(jumpBtn);
+  actions.appendChild(guardBtn);
+  actions.appendChild(dashBtn);
   actions.appendChild(makeActionBtn('light', '弱', 'tp-light'));
   actions.appendChild(makeActionBtn('heavy', '強', 'tp-heavy'));
 
@@ -143,8 +174,9 @@ export function setupTouch(){
 
   // 移動・攻撃の全キーを戻す(メニューを開く時などに巻き戻し防止)
   function clearAllKeys(){
-    stickUp=false; jumpPointers.clear();
-    keys.left=keys.right=keys.up=keys.down=keys.light=keys.heavy=false;
+    stickUp=false; stickDown=false; jumpPointers.clear(); guardPointers.clear();
+    keys.left=keys.right=keys.up=keys.down=keys.light=keys.heavy=keys.dash=false;
+    guardBtn.classList.remove('is-on'); dashBtn.classList.remove('is-on');
     homeStick();
   }
 
@@ -155,7 +187,8 @@ export function setupTouch(){
     b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); handler(b); });
     return b;
   }
-  const btnPrac = sysBtn('練習', 'tp-prac', (b)=>{
+  // 練習モードは1人用専用。対戦では tp-actiononly でCSSごと隠す
+  const btnPrac = sysBtn('練習', 'tp-prac tp-actiononly', (b)=>{
     runtime.PRACTICE=!runtime.PRACTICE;
     if(runtime.PRACTICE){ world.enemies.length=0; runtime.giantsPending=0; }
     b.classList.toggle('is-on', runtime.PRACTICE);
@@ -178,31 +211,63 @@ export function setupTouch(){
     b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); on(); });
     return b;
   }
+  const LV_LABEL = { easy:'よわい', normal:'ふつう', hard:'つよい' };
+  const LV_ORDER = ['easy','normal','hard'];
+
   function buildGuide(isReady){
     panel.innerHTML='';
-    const h=document.createElement('div'); h.className='tp-ptitle'; h.textContent='あそび方'; panel.appendChild(h);
+    const isVs = runtime.MODE==='vs';
+    const h=document.createElement('div'); h.className='tp-ptitle';
+    h.textContent = isVs ? 'あそび方（対戦）' : 'あそび方';
+    panel.appendChild(h);
     const g=document.createElement('div'); g.className='tp-guide';
-    g.innerHTML=[
+    const common=[
       '<b>移動</b>：スティックを左右',
-      '<b>しゃがみ</b>：スティックを下',
       '<b>ジャンプ</b>：ジャンプボタン（スティックを上でも可）',
       '<b>2段ジャンプ</b>：空中でジャンプをもう一度（ボタンが押しやすい）',
-      '<b>ジャンプアッパー</b>：ジャンプ＋弱を同時<br><span class="tp-note">高く飛んで攻撃。飛ぶ敵や回復アイテムに強い（弱を押しながらジャンプが確実）</span>',
+      '<b>ジャンプアッパー</b>：ジャンプ＋弱を同時<br><span class="tp-note">高く飛んで攻撃。当てた時の見返りが大きい（弱を押しながらジャンプが確実）</span>',
       '<b>攻撃</b>：弱 ／ 強',
-    ].map(s=>'<div class="tp-gline">'+s+'</div>').join('');
+    ];
+    const lines = isVs ? common.concat([
+      '<b>ガード</b>：ガードボタン（スティックを下でも可）<br><span class="tp-note">少しずつ削られる。強攻撃の3段目を受けると崩れる</span>',
+      '<b>ダッシュ</b>：ダッシュボタン<br><span class="tp-note">スティックを後ろに入れながら押すとバックダッシュ</span>',
+      '<b>相殺</b>：相手の攻撃に合わせて攻撃<br><span class="tp-note">お互いダメージなしで弾き返す</span>',
+    ]) : ['<b>しゃがみ</b>：スティックを下'].concat(common);
+    g.innerHTML = lines.map(s=>'<div class="tp-gline">'+s+'</div>').join('');
     panel.appendChild(g);
     const row=document.createElement('div'); row.className='tp-mrow';
     row.appendChild(isReady ? mbtn('▶ はじめる','primary',()=>startGame())
                             : mbtn('閉じる','primary',()=>{ manualGuide=false; }));
     panel.appendChild(row);
   }
+
   function buildMenu(isOver){
     panel.innerHTML='';
-    const h=document.createElement('div'); h.className='tp-ptitle'; h.textContent=isOver?'GAME OVER':'一時停止'; panel.appendChild(h);
-    if(isOver){ const s=document.createElement('div'); s.className='tp-pscore'; s.textContent='SCORE '+GAME.score; panel.appendChild(s); }
+    const isVs = runtime.MODE==='vs';
+    const h=document.createElement('div'); h.className='tp-ptitle';
+    h.textContent = isOver ? (isVs ? 'K.O.' : 'GAME OVER') : '一時停止';
+    panel.appendChild(h);
+    if(isOver){
+      const s=document.createElement('div'); s.className='tp-pscore';
+      s.textContent = isVs ? (vs.winner==='p1' ? 'あなたの勝ち！' : 'あなたの負け…')
+                           : 'SCORE '+GAME.score;
+      panel.appendChild(s);
+    }
     const row=document.createElement('div'); row.className='tp-mrow';
     if(!isOver) row.appendChild(mbtn('つづける','primary',()=>{ runtime.paused=false; }));
-    row.appendChild(mbtn('リトライ', isOver?'primary':'', ()=>startGame()));
+    row.appendChild(mbtn(isVs?'もう一度たたかう':'リトライ', isOver?'primary':'', ()=>{
+      runtime.paused=false; startGame();
+    }));
+    if(isVs){
+      // 難易度はその場で切り替えられるように(押すたびに よわい→ふつう→つよい を巡回)
+      const lvBtn = mbtn('CPU：'+LV_LABEL[vs.cpuLevel], '', ()=>{
+        const i = LV_ORDER.indexOf(vs.cpuLevel);
+        vs.cpuLevel = LV_ORDER[(i+1) % LV_ORDER.length];
+        lvBtn.textContent = 'CPU：'+LV_LABEL[vs.cpuLevel];
+      });
+      row.appendChild(lvBtn);
+      row.appendChild(mbtn('キャラを選び直す','', ()=>{ runtime.paused=false; backToCharSelect(); }));
+    }
     row.appendChild(mbtn('最初の画面へ','', ()=>backToLoader()));
     row.appendChild(mbtn('あそび方','ghost',()=>{ manualGuide=true; }));
     panel.appendChild(row);
@@ -217,8 +282,8 @@ export function setupTouch(){
       if(manualGuide)                    key='guide';   // ？ボタン or メニューの「あそび方」
       else if(GAME.over)                 key='over';
       else if(runtime.paused)            key='paused';
-      else if(runtime.PHASE!=='playing') key='ready';   // START待ち → ガイドを見せてから開始
-      else                               key='hidden';
+      else if(runtime.PHASE==='ready')   key='ready';   // START待ち → ガイドを見せてから開始
+      else                               key='hidden';  // 'intro'(開始演出)中は何も出さない
     }
     if(key!==lastKey){
       lastKey=key;

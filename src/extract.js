@@ -1,8 +1,9 @@
 // ===================== スプライト抽出（ゲーム用ラッパ） =====================
-// 実処理は共有コア(extract-core.js)。ここではゲームの state(gfx) と結線する。
+// 実処理は共有コア(extract-core.js)。ここではゲーム側のポーズ配置と結線する。
+// 対戦格闘モードで2キャラ分を別々に読み込むため、このモジュールは状態を持たず
+// 抽出結果を戻り値で返す(呼び出し側がファイターへ格納する)。
 
 import { POSES, ESPR_MAP, COLS, ROWS, EX, LYING_POSES, LYING_ANCHOR_FRAC } from './config.js';
-import { gfx } from './state.js';
 import * as core from './extract-core.js';
 
 // 横たわりポーズの接地アンカー(footY)を「本体の下端」に補正する。
@@ -24,25 +25,27 @@ function lyingFootY(res){
   return h;
 }
 
-// プレイヤー表: 四隅+中央6点でキー色を検出し gfx.KEY に格納
-export function detectKeyColor(){
-  gfx.KEY = core.detectKeyColor(gfx.srcCanvas);
-}
-
-// gfx.srcCanvas を全ポーズ抽出して gfx.FR に格納(despill+膨張あり)
-export function extractAll(){
-  gfx.FR={};
-  const W=gfx.srcCanvas.width, H=gfx.srcCanvas.height;
+// プレイヤー表(5×3)を1枚まるごと抽出し、pose -> frame のテーブルを返す(despill+膨張あり)。
+// キー色は四隅+中央6点から自動検出する。抽出できなかったポーズはキーごと存在しない。
+export function extractPlayerSheet(img){
+  const cv=document.createElement('canvas');
+  cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(img,0,0);
+  const key=core.detectKeyColor(cv);
+  const W=cv.width, H=cv.height;
   const opts={ cols:COLS, rows:ROWS, tol:EX.tol, minsz:EX.minsz, inset:EX.inset, despill:true, dilate:2 };
+  const FR={};
   for(let idx=0; idx<COLS*ROWS; idx++){
-    const pose=POSES[idx]; if(pose===null) continue;
-    const res=core.extractCell(gfx.srcCtx, W, H, gfx.KEY, idx%COLS, (idx/COLS)|0, opts);
+    const pose=POSES[idx]; if(!pose) continue;
+    const res=core.extractCell(cx, W, H, key, idx%COLS, (idx/COLS)|0, opts);
     if(res){
       // 横たわりポーズは本体下端を接地アンカーにする(髪・尻尾の垂れ下がりで浮くのを防ぐ)
       if(LYING_POSES.includes(pose)) res.footY = lyingFootY(res);
-      gfx.FR[pose]=res;
+      FR[pose]=res;
     }
   }
+  return FR;
 }
 
 // 敵表(img)を抽出して { type:[{canvas,white,w,h},...], ... } を返す。
