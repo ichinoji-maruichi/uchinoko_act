@@ -343,6 +343,10 @@ body.tp-modal #tp-sys{ display:none !important; }
   border:2px solid var(--ink);border-radius:999px;padding:3px 12px;box-shadow:2px 2px 0 var(--ink)}
 .gem-cta-main{flex:1 1 220px;min-width:200px;font-size:14px;line-height:1.6}
 .gem-cta .btn{flex:0 0 auto}
+/* 有料の選択肢(PixAI)。おすすめ度は上のGemより控えめにしたいので、地の色を落ち着かせる */
+.gem-cta.alt{background:var(--bg2);box-shadow:none;border-style:dashed}
+.gem-badge.alt{background:var(--accent)}
+.gem-cta.alt .muted{font-size:13px}
 
 /* ---- 処理中オーバーレイ(読み込み・抽出中) ---- */
 #loading{display:none}
