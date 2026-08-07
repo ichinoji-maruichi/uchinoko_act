@@ -84,7 +84,10 @@ h3{font-size:19px;font-weight:900}
 /* ---- ヒーロー ---- */
 .hero{padding:22px 0 14px}
 .hero-top{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
-.hero-top #heroLogo{flex:0 0 auto}
+/* 画面が狭い時はロゴを縮ませる。flex:0 0 auto のままだと 420px を保とうとして
+   375px 幅の端末で横スクロールが出る。min-width:0 は、フレックス項目の既定
+   (min-width:auto = 画像の実寸)が縮小を妨げるのを外すために必要。 */
+.hero-top #heroLogo{flex:0 1 auto;min-width:0}
 .hero-copy{flex:1 1 300px;min-width:280px}
 .hero-logo{max-width:420px;width:100%}
 .hero-logo-fallback{font-size:40px;font-weight:900;letter-spacing:.01em;line-height:1.05;
